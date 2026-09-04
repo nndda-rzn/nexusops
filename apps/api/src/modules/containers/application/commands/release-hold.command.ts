@@ -38,7 +38,7 @@ export async function releaseHoldCommand(
       ))
 
     return {
-    type: 'container.released',
+    type: 'container.released' as const,
     containerId: cmd.containerId,
     orgId: cmd.orgId,
     holdId: cmd.holdId,

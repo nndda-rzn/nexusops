@@ -28,7 +28,7 @@ export async function reportCraneBreakdownCommand(
       .where(and(eq(cranes.id, cmd.craneId), eq(cranes.orgId, cmd.orgId)))
 
     return {
-    type: 'crane.breakdown',
+    type: 'crane.breakdown' as const,
     orgId: cmd.orgId,
     craneId: cmd.craneId,
     craneCode: crane.code,

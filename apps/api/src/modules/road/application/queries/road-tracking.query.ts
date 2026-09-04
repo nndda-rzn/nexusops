@@ -38,7 +38,7 @@ export async function updateVehiclePositionCommand(
     heading: cmd.heading, recordedAt,
   })
 
-  await eventBus.emit('vehicle.position_updated' as never, {
+  await eventBus.emit('vehicle.position_updated', {
     type: 'vehicle.position_updated',
     vehicleId: cmd.vehicleId, position: cmd.position,
     speed: cmd.speed, heading: cmd.heading, recordedAt,

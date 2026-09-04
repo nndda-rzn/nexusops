@@ -31,6 +31,25 @@ export class DomainError extends AppError {
   }
 }
 
+// L-01 FIX: Domain not found error — resource does not exist (404)
+// All *NotFoundError classes should extend this instead of DomainError
+export class DomainNotFoundError extends AppError {
+  constructor(
+    slug: string,
+    title: string,
+    detail: string,
+    extensions?: Record<string, unknown>
+  ) {
+    super(
+      `https://nexusops.io/errors/${slug}`,
+      title,
+      404,          // ← 404 Not Found, not 409 Conflict
+      detail,
+      extensions
+    )
+  }
+}
+
 // Not found error (404)
 export class NotFoundError extends AppError {
   constructor(resource: string, id: string) {

@@ -1,6 +1,7 @@
-import { DomainError } from '@/shared/errors'
+import { DomainError, DomainNotFoundError } from '@/shared/errors'
 
-export class BerthNotFoundError extends DomainError {
+// L-01 FIX: 404 not 409
+export class BerthNotFoundError extends DomainNotFoundError {
   constructor(id: string) {
     super('berth-not-found', 'Berth Not Found', `Berth '${id}' not found.`, { id })
   }
@@ -24,12 +25,12 @@ export class BerthOverlapError extends DomainError {
 
 export class VesselNotEligibleError extends DomainError {
   constructor(reason: string, details?: Record<string, unknown>) {
-    super('berth-not-eligible', 'Vessel Not Eligible for Berth',
-      reason, details)
+    super('berth-not-eligible', 'Vessel Not Eligible for Berth', reason, details)
   }
 }
 
-export class BerthAssignmentNotFoundError extends DomainError {
+// L-01 FIX: 404 not 409
+export class BerthAssignmentNotFoundError extends DomainNotFoundError {
   constructor(id: string) {
     super('berth-assignment-not-found', 'Berth Assignment Not Found',
       `Berth assignment '${id}' not found.`, { id })

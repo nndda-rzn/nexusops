@@ -1,8 +1,10 @@
-import { DomainError } from '@/shared/errors'
+import { DomainError, DomainNotFoundError } from '@/shared/errors'
 
-export class HandoverNotFoundError extends DomainError {
+// L-01 FIX: 404 not 409
+export class HandoverNotFoundError extends DomainNotFoundError {
   constructor(id: string) {
-    super('handover-not-found', 'Handover Not Found', `Handover request '${id}' not found.`, { id })
+    super('handover-not-found', 'Handover Not Found',
+      `Handover request '${id}' not found.`, { id })
   }
 }
 

@@ -11,11 +11,18 @@ export const berthRoutes = new Elysia({ prefix: '/terminal' })
   .get('/berths', async ({ user, query }) => {
     if (!user) throw new UnauthorizedError()
     const result = await withDbContext(user, (db) =>
-      listBerthsQuery(user.orgId, query.terminal_id, db)
+      listBerthsQuery(user.orgId, query.terminal_id, db, {
+        ...(query.page ? { page: Number(query.page) } : {}),
+        ...(query.limit ? { limit: Number(query.limit) } : {}),
+      })
     )
-    return { data: result }
+    return result
   }, {
-    query: t.Object({ terminal_id: t.Optional(t.String()) }),
+    query: t.Object({
+      terminal_id: t.Optional(t.String()),
+      page:        t.Optional(t.String()),
+      limit:       t.Optional(t.String()),
+    }),
     detail: { tags: ['Terminal'], summary: 'List berths' },
   })
 

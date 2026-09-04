@@ -9,11 +9,22 @@ import { listHandoverRequestsQuery, getHandoverByIdQuery } from '@/modules/inter
 export const intermodalRoutes = new Elysia({ prefix: '/intermodal' })
   .use(authMiddleware)
 
-  .get('/handovers', async ({ user }) => {
+  .get('/handovers', async ({ user, query }) => {
     if (!user) throw new UnauthorizedError()
-    const result = await withDbContext(user, (db) => listHandoverRequestsQuery(user.orgId, db))
-    return { data: result }
-  }, { detail: { tags: ['Intermodal'], summary: 'List handover requests' } })
+    const result = await withDbContext(user, (db) =>
+      listHandoverRequestsQuery(user.orgId, db, {
+        ...(query.page ? { page: Number(query.page) } : {}),
+        ...(query.limit ? { limit: Number(query.limit) } : {}),
+      })
+    )
+    return result
+  }, {
+    query: t.Object({
+      page:  t.Optional(t.String()),
+      limit: t.Optional(t.String()),
+    }),
+    detail: { tags: ['Intermodal'], summary: 'List handover requests' },
+  })
 
   .get('/handovers/:id', async ({ user, params }) => {
     if (!user) throw new UnauthorizedError()

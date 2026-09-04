@@ -9,8 +9,11 @@ import {
 import { InvalidContainerTransitionError, ContainerAlreadyGateOutError } from '../errors/container.errors'
 
 export type {
-  ContainerStatus, ContainerType, ContainerSize, CreateContainerProps, ContainerProps,
-}
+  ContainerStatus, ContainerType, ContainerSize,
+  CreateContainerProps, ContainerProps,
+} from './container.types'
+
+export type { HoldType, MovementType } from './container.types'
 
 export {
   CONTAINER_STATUSES, CONTAINER_TYPES, CONTAINER_SIZES, MOVEMENT_TYPES, HOLD_TYPES,

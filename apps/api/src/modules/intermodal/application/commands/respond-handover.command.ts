@@ -1,6 +1,7 @@
 import { handoverRequests } from '@/shared/database/schema/intermodal'
 import { eq, and } from 'drizzle-orm'
 import { HandoverNotFoundError, HandoverAlreadyRespondedError } from '@/modules/intermodal/domain/errors/handover.errors'
+import { ForbiddenError } from '@/shared/errors'
 import { eventBus } from '@/shared/events'
 import type { DbContext } from '@/shared/database/client'
 
@@ -27,6 +28,15 @@ export async function respondHandoverCommand(
     .limit(1)
 
   if (!handover) throw new HandoverNotFoundError(cmd.handoverId)
+
+  // Guard: requester cannot respond to their own handover request
+  if (handover.fromEntityId === cmd.respondingEntityId) {
+    throw new ForbiddenError(
+      'Requester cannot respond to their own handover request.',
+      { handover_id: cmd.handoverId }
+    )
+  }
+
   if (handover.status !== 'PENDING') {
     throw new HandoverAlreadyRespondedError(cmd.handoverId, handover.status)
   }

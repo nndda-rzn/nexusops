@@ -15,6 +15,7 @@ import { operationDependencyRoutes } from '@/modules/operations/presentation/rou
 import { interventionRoutes } from '@/modules/operations/presentation/routes/intervention.routes'
 import { containerRoutes } from '@/modules/containers/presentation/routes/containers.routes'
 import { berthRoutes } from '@/modules/terminal/presentation/routes/berth.routes'
+import { craneRoutes } from '@/modules/terminal/presentation/routes/crane.routes'
 
 export function createApp() {
   return new Elysia()
@@ -91,4 +92,5 @@ export function createApp() {
     .use(interventionRoutes)
     .use(containerRoutes)
     .use(berthRoutes)
+    .use(craneRoutes)
 }

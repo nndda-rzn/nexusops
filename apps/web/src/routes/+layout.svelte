@@ -5,6 +5,7 @@
 
 <svelte:head>
   <title>NexusOps</title>
+  <meta name="description" content="Enterprise Integrated Operations Platform" />
 </svelte:head>
 
 <slot />

@@ -1,12 +1,24 @@
 -- ─────────────────────────────────────────
+-- Extensions (harus pertama sebelum apapun yang bergantung padanya)
+-- ─────────────────────────────────────────
+CREATE EXTENSION IF NOT EXISTS ltree;
+
+-- ─────────────────────────────────────────
+-- Alter hierarchy_path ke ltree type
+-- ─────────────────────────────────────────
+ALTER TABLE "identity"."organizations"
+  ALTER COLUMN "hierarchy_path" TYPE ltree USING "hierarchy_path"::ltree;
+
+-- ─────────────────────────────────────────
 -- Indexes untuk identity schema
+-- (dibuat SETELAH ltree extension dan column type change)
 -- ─────────────────────────────────────────
 
 -- organizations
 CREATE INDEX "organizations_entity_type_idx" ON "identity"."organizations" ("entity_type");
 CREATE INDEX "organizations_parent_org_id_idx" ON "identity"."organizations" ("parent_org_id");
 CREATE INDEX "organizations_status_idx" ON "identity"."organizations" ("status");
-CREATE INDEX "organizations_hierarchy_path_idx" ON "identity"."organizations" USING GIST ("hierarchy_path" gist_ltree_ops);
+CREATE INDEX "organizations_hierarchy_path_idx" ON "identity"."organizations" USING GIST ("hierarchy_path");
 
 -- users
 CREATE INDEX "users_status_idx" ON "identity"."users" ("status");
@@ -36,19 +48,9 @@ CREATE INDEX "entity_data_access_grantee_idx" ON "identity"."entity_data_access"
 CREATE INDEX "entity_data_access_resource_idx" ON "identity"."entity_data_access" ("resource_type", "resource_id");
 
 -- ─────────────────────────────────────────
--- ltree extension (jika belum ada)
--- ─────────────────────────────────────────
-CREATE EXTENSION IF NOT EXISTS ltree;
-
--- Alter hierarchy_path ke ltree type
-ALTER TABLE "identity"."organizations"
-  ALTER COLUMN "hierarchy_path" TYPE ltree USING "hierarchy_path"::ltree;
-
--- ─────────────────────────────────────────
 -- Row Level Security (RLS)
 -- ─────────────────────────────────────────
 
--- Enable RLS pada semua table identity
 ALTER TABLE "identity"."organizations" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "identity"."org_members" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "identity"."org_module_access" ENABLE ROW LEVEL SECURITY;
@@ -57,12 +59,12 @@ ALTER TABLE "identity"."role_permissions" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "identity"."refresh_tokens" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "identity"."login_history" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "identity"."entity_data_access" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "identity"."permissions" ENABLE ROW LEVEL SECURITY;
 
 -- ─────────────────────────────────────────
 -- RLS Policies — organizations
 -- ─────────────────────────────────────────
 
--- Tier 3: Entity isolation — org bisa lihat dirinya sendiri
 CREATE POLICY "organizations_entity_isolation"
   ON "identity"."organizations"
   AS PERMISSIVE FOR SELECT
@@ -71,7 +73,6 @@ CREATE POLICY "organizations_entity_isolation"
     OR parent_org_id = current_setting('app.current_org_id', true)
   );
 
--- Tier 1: Holding read all orgs dalam group
 CREATE POLICY "organizations_holding_read_all"
   ON "identity"."organizations"
   AS PERMISSIVE FOR SELECT
@@ -86,7 +87,6 @@ CREATE POLICY "organizations_holding_read_all"
     )
   );
 
--- Write: hanya org sendiri atau Holding
 CREATE POLICY "organizations_write"
   ON "identity"."organizations"
   AS PERMISSIVE FOR ALL
@@ -132,6 +132,53 @@ CREATE POLICY "roles_isolation"
   );
 
 -- ─────────────────────────────────────────
+-- RLS Policies — permissions (global read, holding write)
+-- ─────────────────────────────────────────
+
+CREATE POLICY "permissions_read_all"
+  ON "identity"."permissions"
+  AS PERMISSIVE FOR SELECT
+  USING (true);
+
+CREATE POLICY "permissions_write_holding"
+  ON "identity"."permissions"
+  AS PERMISSIVE FOR ALL
+  USING (current_setting('app.entity_type', true) = 'HOLDING');
+
+-- ─────────────────────────────────────────
+-- RLS Policies — role_permissions
+-- KRITIS: RLS harus punya policy atau semua akses diblokir
+-- ─────────────────────────────────────────
+
+CREATE POLICY "role_permissions_read"
+  ON "identity"."role_permissions"
+  AS PERMISSIVE FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM "identity"."roles" r
+      WHERE r.id = role_id
+        AND (
+          r.org_id = current_setting('app.current_org_id', true)
+          OR current_setting('app.entity_type', true) = 'HOLDING'
+        )
+    )
+  );
+
+CREATE POLICY "role_permissions_write"
+  ON "identity"."role_permissions"
+  AS PERMISSIVE FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM "identity"."roles" r
+      WHERE r.id = role_id
+        AND (
+          r.org_id = current_setting('app.current_org_id', true)
+          OR current_setting('app.entity_type', true) = 'HOLDING'
+        )
+    )
+  );
+
+-- ─────────────────────────────────────────
 -- RLS Policies — refresh_tokens
 -- ─────────────────────────────────────────
 
@@ -172,4 +219,9 @@ CREATE POLICY "entity_data_access_policy"
 -- ─────────────────────────────────────────
 -- audit schema: INSERT only, no UPDATE/DELETE
 -- ─────────────────────────────────────────
-REVOKE UPDATE, DELETE ON ALL TABLES IN SCHEMA audit FROM nexusops;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'audit') THEN
+    REVOKE UPDATE, DELETE ON ALL TABLES IN SCHEMA audit FROM nexusops;
+  END IF;
+END $$;

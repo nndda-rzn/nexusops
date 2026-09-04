@@ -1,7 +1,8 @@
 import { Elysia } from 'elysia'
 import { verifyJwt } from '@/shared/auth/jwt'
-import { setRequestContext } from '@/shared/database/client'
+import { withRequestContext } from '@/shared/database/client'
 import { UnauthorizedError, ForbiddenError } from '@/shared/errors'
+import { getRedis, RedisKeys } from '@/shared/redis'
 import type { JwtPayload } from '@/shared/auth/jwt.types'
 
 // ─────────────────────────────────────────
@@ -22,12 +23,12 @@ export interface AuthUser {
 
 // ─────────────────────────────────────────
 // Auth Middleware
-// Verifies JWT, sets PostgreSQL RLS context,
-// attaches user to request context
+// Verifies JWT, attaches user to request context.
+// DB context (RLS) is set per-query via withRequestContext()
 // ─────────────────────────────────────────
 
 export const authMiddleware = new Elysia({ name: 'auth-middleware' })
-  .derive({ as: 'global' }, async ({ headers, request }): Promise<{ user: AuthUser | null }> => {
+  .derive({ as: 'global' }, async ({ headers }): Promise<{ user: AuthUser | null }> => {
     const authHeader = headers.authorization
     if (!authHeader?.startsWith('Bearer ')) {
       return { user: null }
@@ -38,12 +39,12 @@ export const authMiddleware = new Elysia({ name: 'auth-middleware' })
     try {
       const payload: JwtPayload = await verifyJwt(token)
 
-      // Set PostgreSQL RLS context
-      await setRequestContext({
-        orgId: payload.org_id,
-        entityType: payload.entity_type,
-        holdingId: payload.holding_id,
-      })
+      // Check JWT blacklist in Redis (revoked tokens)
+      const redis = getRedis()
+      const isBlacklisted = await redis.exists(RedisKeys.jwtBlacklist(payload.jti))
+      if (isBlacklisted) {
+        return { user: null }
+      }
 
       return {
         user: {
@@ -64,25 +65,31 @@ export const authMiddleware = new Elysia({ name: 'auth-middleware' })
   })
 
 // ─────────────────────────────────────────
-// requireAuth guard
-// Throws 401 if user is not authenticated
+// withDbContext — wraps a DB operation with RLS context
+// Use this in every handler that queries the database
+//
+// Usage:
+//   const vessels = await withDbContext(user, async (db) => {
+//     return db.select().from(maritime.vessels)
+//   })
 // ─────────────────────────────────────────
 
-export const requireAuth = new Elysia({ name: 'require-auth' })
-  .use(authMiddleware)
-  .macro({
-    auth: (enabled: boolean) => ({
-      beforeHandle({ user }: { user: AuthUser | null }) {
-        if (enabled && !user) {
-          throw new UnauthorizedError()
-        }
-      }
-    })
-  })
+export async function withDbContext<T>(
+  user: AuthUser,
+  fn: Parameters<typeof withRequestContext>[1]
+): Promise<T> {
+  return withRequestContext(
+    {
+      orgId: user.orgId,
+      entityType: user.entityType,
+      holdingId: user.holdingId,
+    },
+    fn
+  ) as Promise<T>
+}
 
 // ─────────────────────────────────────────
-// requireModule guard
-// Throws 403 if entity doesn't have module access
+// Guards
 // ─────────────────────────────────────────
 
 export function requireModule(module: string) {
@@ -97,11 +104,6 @@ export function requireModule(module: string) {
   }
 }
 
-// ─────────────────────────────────────────
-// requirePermission guard
-// Throws 403 if user doesn't have permission
-// ─────────────────────────────────────────
-
 export function requirePermission(permission: string) {
   return ({ user }: { user: AuthUser | null }) => {
     if (!user) throw new UnauthorizedError()
@@ -114,11 +116,6 @@ export function requirePermission(permission: string) {
   }
 }
 
-// ─────────────────────────────────────────
-// requireHolding guard
-// Throws 403 if user is not from Holding entity
-// ─────────────────────────────────────────
-
 export function requireHolding() {
   return ({ user }: { user: AuthUser | null }) => {
     if (!user) throw new UnauthorizedError()
@@ -129,11 +126,6 @@ export function requireHolding() {
     }
   }
 }
-
-// ─────────────────────────────────────────
-// requireEntityType guard
-// Throws 403 if user is not from specified entity type
-// ─────────────────────────────────────────
 
 export function requireEntityType(...entityTypes: string[]) {
   return ({ user }: { user: AuthUser | null }) => {

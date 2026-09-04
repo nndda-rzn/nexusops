@@ -1,13 +1,19 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
-// for information about these interfaces
+import type { UserSession } from '@/core/session'
+
 declare global {
-	namespace App {
-		// interface Error {}
-		// interface Locals {}
-		// interface PageData {}
-		// interface PageState {}
-		// interface Platform {}
-	}
+  namespace App {
+    interface Locals {
+      user: UserSession | null
+    }
+    interface PageData {}
+    interface PageState {}
+    interface Platform {}
+    interface Error {
+      message: string
+      code?: string
+    }
+  }
 }
 
-export {};
+export {}

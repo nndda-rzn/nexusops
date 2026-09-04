@@ -78,7 +78,7 @@ export function createApp() {
     .onAfterHandle(({ set }) => {
       set.headers['X-Content-Type-Options'] = 'nosniff'
       set.headers['X-Frame-Options'] = 'DENY'
-      set.headers['X-XSX-Protection'] = '1; mode=block'
+      set.headers['X-XSS-Protection'] = '1; mode=block'
       set.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     })
 

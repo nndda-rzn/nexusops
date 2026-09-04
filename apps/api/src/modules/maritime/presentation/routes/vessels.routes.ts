@@ -122,6 +122,7 @@ export const vesselsRoutes = new Elysia({ prefix: '/maritime' })
     await withDbContext(user, (db) =>
       updateVesselPositionCommand({
         vesselId: body.vessel_id,
+        orgId: user.orgId,
         position: body.position,
         ...(body.speed ? { speed: body.speed } : {}),
         ...(body.heading ? { heading: body.heading } : {}),

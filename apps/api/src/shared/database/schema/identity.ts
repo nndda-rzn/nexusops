@@ -1,4 +1,4 @@
-import { pgSchema, pgTable, text, timestamp, boolean, pgEnum, primaryKey, index, uniqueIndex } from 'drizzle-orm/pg-core'
+import { pgSchema, text, timestamp, boolean, pgEnum, primaryKey, index, uniqueIndex } from 'drizzle-orm/pg-core'
 import { ulid } from 'ulid'
 
 // ─────────────────────────────────────────

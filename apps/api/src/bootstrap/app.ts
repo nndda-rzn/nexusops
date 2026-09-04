@@ -42,6 +42,8 @@ import { assetOperationsRoutes } from '@/modules/assets/presentation/routes/asse
 import { workOrdersRoutes } from '@/modules/maintenance/presentation/routes/work-orders.routes'
 import { maintenanceResourcesRoutes } from '@/modules/maintenance/presentation/routes/maintenance-resources.routes'
 import { yardRoutes } from '@/modules/yard/presentation/routes/yard.routes'
+import { warehouseRoutes } from '@/modules/warehouse/presentation/routes/warehouse.routes'
+import { warehouseOperationsRoutes } from '@/modules/warehouse/presentation/routes/warehouse-operations.routes'
 
 export function createApp() {
   return new Elysia()
@@ -127,4 +129,6 @@ export function createApp() {
     .use(workOrdersRoutes)
     .use(maintenanceResourcesRoutes)
     .use(yardRoutes)
+    .use(warehouseRoutes)
+    .use(warehouseOperationsRoutes)
 }

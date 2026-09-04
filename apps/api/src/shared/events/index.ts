@@ -1,9 +1,12 @@
 import { logger } from '@/shared/logging'
+import type { EventMap } from '@/shared/events/event-map'
+
+export type { EventMap } from '@/shared/events/event-map'
+export * from '@/shared/events/event-map'
 
 // ─────────────────────────────────────────
-// In-Memory Event Bus
+// Typed In-Memory Event Bus
 // ─────────────────────────────────────────
-// Implements a typed publish/subscribe pattern for domain events.
 // Phase 1-3: in-process EventEmitter
 // Phase 4+: upgrade to Redis Pub/Sub without changing subscribers
 // ─────────────────────────────────────────
@@ -18,27 +21,13 @@ interface Subscription {
 class InMemoryEventBus {
   private subscriptions: Subscription[] = []
 
-  /**
-   * Subscribe to a domain event
-   */
-  on<T>(event: string, handler: EventHandler<T>): () => void {
-    const subscription: Subscription = {
-      event,
-      handler: handler as EventHandler,
-    }
+  on<K extends keyof EventMap>(event: K, handler: EventHandler<EventMap[K]>): () => void {
+    const subscription: Subscription = { event, handler: handler as EventHandler }
     this.subscriptions.push(subscription)
-
-    // Return unsubscribe function
-    return () => {
-      this.subscriptions = this.subscriptions.filter(s => s !== subscription)
-    }
+    return () => { this.subscriptions = this.subscriptions.filter(s => s !== subscription) }
   }
 
-  /**
-   * Emit a domain event to all subscribers
-   * Errors in individual handlers are logged but do not block other handlers
-   */
-  async emit<T>(event: string, payload: T): Promise<void> {
+  async emit<K extends keyof EventMap>(event: K, payload: EventMap[K]): Promise<void> {
     const handlers = this.subscriptions
       .filter(s => s.event === event || s.event === '*')
       .map(s => s.handler)
@@ -59,30 +48,20 @@ class InMemoryEventBus {
     )
   }
 
-  /**
-   * Subscribe to all events (wildcard)
-   */
-  onAll(handler: EventHandler<{ event: string; payload: unknown }>): () => void {
-    return this.on('*', handler)
+  onAll(handler: (payload: unknown) => void | Promise<void>): () => void {
+    const subscription: Subscription = { event: '*', handler }
+    this.subscriptions.push(subscription)
+    return () => { this.subscriptions = this.subscriptions.filter(s => s !== subscription) }
   }
 
-  /**
-   * Remove all subscriptions for an event
-   */
   off(event: string): void {
     this.subscriptions = this.subscriptions.filter(s => s.event !== event)
   }
 
-  /**
-   * Clear all subscriptions
-   */
   clear(): void {
     this.subscriptions = []
   }
 
-  /**
-   * Get subscriber count for an event (useful for testing)
-   */
   subscriberCount(event: string): number {
     return this.subscriptions.filter(s => s.event === event).length
   }

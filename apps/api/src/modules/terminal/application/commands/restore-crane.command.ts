@@ -27,7 +27,7 @@ export async function restoreCraneCommand(
       .where(and(eq(cranes.id, cmd.craneId), eq(cranes.orgId, cmd.orgId)))
 
     return {
-    type: 'crane.restored',
+    type: 'crane.restored' as const,
     orgId: cmd.orgId,
     craneId: cmd.craneId,
     craneCode: crane.code,

@@ -2,7 +2,6 @@ import { eventBus } from '@/shared/events'
 import { applyInterventionCommand } from '@/modules/operations/application/commands/apply-intervention.command'
 import { db } from '@/shared/database/client'
 import { logger } from '@/shared/logging'
-import type { InterventionExecutedEvent } from '@/modules/operations/domain/events/operation.events'
 
 // ─────────────────────────────────────────
 // Register all domain event subscribers
@@ -12,7 +11,7 @@ import type { InterventionExecutedEvent } from '@/modules/operations/domain/even
 export function registerEventSubscribers(): void {
   // L-02 FIX: Intervention execution via event subscription
   // When intervention is approved/auto-approved, apply proposedChanges to operation
-  eventBus.on<InterventionExecutedEvent>(
+  eventBus.on(
     'operation.intervention_executed',
     async (event) => {
       try {

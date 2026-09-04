@@ -2,6 +2,7 @@ import { Elysia } from 'elysia'
 import { verifyJwt } from '@/shared/auth/jwt'
 import { withRequestContext } from '@/shared/database/client'
 import { UnauthorizedError, ForbiddenError } from '@/shared/errors'
+import { getRedis, RedisKeys } from '@/shared/redis'
 import type { JwtPayload } from '@/shared/auth/jwt.types'
 
 // ─────────────────────────────────────────
@@ -37,6 +38,13 @@ export const authMiddleware = new Elysia({ name: 'auth-middleware' })
 
     try {
       const payload: JwtPayload = await verifyJwt(token)
+
+      // Check JWT blacklist in Redis (revoked tokens)
+      const redis = getRedis()
+      const isBlacklisted = await redis.exists(RedisKeys.jwtBlacklist(payload.jti))
+      if (isBlacklisted) {
+        return { user: null }
+      }
 
       return {
         user: {

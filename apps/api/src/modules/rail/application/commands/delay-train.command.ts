@@ -12,6 +12,8 @@ export interface DelayTrainCommand {
 export async function delayTrainCommand(cmd: DelayTrainCommand, db: DbContext): Promise<void> {
   const train = await findTrainByIdOrFail(cmd.trainId, cmd.orgId, db)
   train.delay(cmd.delayMinutes, cmd.reason)
+  // Q-03: transition to DELAYED only if currently EN_ROUTE.
+  // If already DELAYED, delay() still accumulates minutes without re-transitioning.
   if (train.status === 'EN_ROUTE') train.transition('DELAYED')
   await saveTrain(train, db)
 

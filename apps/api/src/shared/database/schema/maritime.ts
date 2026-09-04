@@ -184,4 +184,6 @@ export const vesselPositions = maritimeSchema.table('vessel_positions', {
   recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull(),
 }, (t) => [
   index('vessel_positions_vessel_time_idx').on(t.vesselId, t.recordedAt),
+  // Q-13: GIST spatial index on position — defined in migration 0013, not supported by Drizzle natively
+  // CREATE INDEX vessel_positions_geom_idx ON maritime.vessel_positions USING GIST (position);
 ])

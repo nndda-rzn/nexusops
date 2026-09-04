@@ -14,9 +14,16 @@ export interface AssignCrewCommand {
 
 export async function assignCrewCommand(cmd: AssignCrewCommand, db: DbContext): Promise<{ id: string }> {
   const train = await findTrainByIdOrFail(cmd.trainId, cmd.orgId, db)
+
+  // Q-07: only transition if TRAINSET_ASSIGNED — crew can also be added when already CREW_ASSIGNED
+  // (multiple crew members per train). If status is anything else, throw a meaningful error.
   if (train.status === 'TRAINSET_ASSIGNED') {
     train.transition('CREW_ASSIGNED')
     await saveTrain(train, db)
+  } else if (train.status !== 'CREW_ASSIGNED') {
+    throw new Error(
+      `Cannot assign crew to train in status '${train.status}'. Train must be TRAINSET_ASSIGNED or CREW_ASSIGNED.`
+    )
   }
 
   const id = generateId()

@@ -3,14 +3,16 @@ services:
   # Reverse Proxy
   # ─────────────────────────────────────────
   nginx:
-    image: nginx:alpine
+    image: nginx:1.27-alpine
     ports:
       - "80:80"
     volumes:
       - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - web
-      - api
+      web:
+        condition: service_started
+      api:
+        condition: service_healthy
     networks:
       - nexusops
 
@@ -27,11 +29,12 @@ services:
       - ./apps/web:/app
       - /app/node_modules
     environment:
-      - PUBLIC_API_URL=http://localhost:4000
-      - PUBLIC_WS_URL=ws://localhost:4000
+      - PUBLIC_API_URL=http://api:4000
+      - PUBLIC_WS_URL=ws://api:4000
       - PUBLIC_APP_ENV=development
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     networks:
       - nexusops
 
@@ -55,7 +58,13 @@ services:
       redis:
         condition: service_healthy
       minio:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     networks:
       - nexusops
 
@@ -97,6 +106,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+      start_period: 10s
     networks:
       - nexusops
 
@@ -104,7 +114,7 @@ services:
   # Redis
   # ─────────────────────────────────────────
   redis:
-    image: redis:7-alpine
+    image: redis:7.4-alpine
     ports:
       - "6379:6379"
     volumes:
@@ -116,6 +126,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+      start_period: 5s
     networks:
       - nexusops
 
@@ -123,7 +134,7 @@ services:
   # MinIO (Object Storage)
   # ─────────────────────────────────────────
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2024-11-07T00-52-20Z
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -134,10 +145,11 @@ services:
       MINIO_ROOT_PASSWORD: nexusops_secret
     command: server /data --console-address ":9001"
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
     networks:
       - nexusops
 
@@ -145,7 +157,7 @@ services:
   # MinIO Init (create buckets)
   # ─────────────────────────────────────────
   minio-init:
-    image: minio/mc:latest
+    image: minio/mc:RELEASE.2024-11-17T19-35-25Z
     depends_on:
       minio:
         condition: service_healthy
@@ -158,6 +170,8 @@ services:
         mc mb --ignore-existing nexusops/nexusops-exports &&
         mc mb --ignore-existing nexusops/nexusops-attachments &&
         mc mb --ignore-existing nexusops/nexusops-temp &&
+        mc ilm rule add --expiry-days 1 nexusops/nexusops-temp &&
+        mc ilm rule add --expiry-days 7 nexusops/nexusops-exports &&
         echo 'MinIO buckets initialized'
       "
     networks:

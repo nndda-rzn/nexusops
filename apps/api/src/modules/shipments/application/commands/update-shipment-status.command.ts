@@ -14,6 +14,22 @@ export interface UpdateShipmentStatusCommand {
   actorId: string
 }
 
+// L-06 FIX: valid state transitions
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  DRAFT:             ['BOOKED', 'CANCELLED'],
+  BOOKED:            ['IN_TRANSIT', 'CANCELLED'],
+  IN_TRANSIT:        ['AT_TERMINAL', 'DELIVERED', 'DELAYED', 'CANCELLED'],
+  AT_TERMINAL:       ['CUSTOMS_CLEARANCE', 'IN_TRANSIT', 'CANCELLED'],
+  CUSTOMS_CLEARANCE: ['DELIVERED', 'ON_HOLD', 'CANCELLED'],
+  DELIVERED:         ['COMPLETED'],
+  ON_HOLD:           ['BOOKED', 'CANCELLED'],
+  DELAYED:           ['IN_TRANSIT', 'CANCELLED'],
+  COMPLETED:         [],
+  CANCELLED:         [],
+  DAMAGED:           ['CANCELLED'],
+  LOST:              ['CANCELLED'],
+}
+
 export async function updateShipmentStatusCommand(
   cmd: UpdateShipmentStatusCommand,
   db: DbContext
@@ -26,7 +42,7 @@ export async function updateShipmentStatusCommand(
 
   if (!shipment) throw new ShipmentNotFoundError(cmd.shipmentId)
 
-  // C-03 FIX: correct error types for terminal states
+  // L-03 FIX: correct error types for terminal states (already done in branch 1)
   if (shipment.status === 'COMPLETED') {
     throw new ConflictError(
       `Shipment '${cmd.shipmentId}' is already completed and cannot be updated.`,
@@ -40,13 +56,21 @@ export async function updateShipmentStatusCommand(
     )
   }
 
-  // S-04 FIX: added orgId filter to UPDATE
+  // L-06 FIX: validate state transition
+  const allowed = VALID_TRANSITIONS[shipment.status] ?? []
+  if (!allowed.includes(cmd.status)) {
+    throw new ConflictError(
+      `Cannot transition shipment from '${shipment.status}' to '${cmd.status}'.`,
+      { from: shipment.status, to: cmd.status, allowed }
+    )
+  }
+
   await db
     .update(shipments)
     .set({ status: cmd.status, updatedAt: new Date() })
     .where(and(
       eq(shipments.id, cmd.shipmentId),
-      eq(shipments.orgId, cmd.orgId),  // ← orgId filter added
+      eq(shipments.orgId, cmd.orgId),
     ))
 
   await eventBus.emit('shipment.status_changed', {

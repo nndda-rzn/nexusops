@@ -1,0 +1,2 @@
+ALTER TABLE "identity"."refresh_tokens" ADD COLUMN "token_prefix" text NOT NULL;--> statement-breakpoint
+CREATE INDEX "refresh_tokens_prefix_idx" ON "identity"."refresh_tokens" USING btree ("token_prefix");

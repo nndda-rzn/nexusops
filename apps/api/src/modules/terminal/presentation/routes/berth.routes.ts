@@ -2,10 +2,38 @@ import { Elysia, t } from 'elysia'
 import { authMiddleware, withDbContext } from '@/shared/auth/middleware'
 import { UnauthorizedError } from '@/shared/errors'
 import { assignBerthCommand } from '@/modules/terminal/application/commands/assign-berth.command'
+import { createBerthCommand } from '@/modules/terminal/application/commands/terminal.commands'
 import { listBerthsQuery, getBerthAssignmentsQuery } from '@/modules/terminal/application/queries/berth.queries'
 
 export const berthRoutes = new Elysia({ prefix: '/terminal' })
   .use(authMiddleware)
+
+  // POST /terminal/berths
+  .post('/berths', async ({ user, body }) => {
+    if (!user) throw new UnauthorizedError()
+    const result = await withDbContext(user, (db) =>
+      createBerthCommand({
+        orgId: user.orgId,
+        terminalId: body.terminal_id,
+        code: body.code,
+        name: body.name,
+        lengthM: body.length_m,
+        maxDraftM: body.max_draft_m,
+        ...(body.max_vessel_loa ? { maxVesselLoa: body.max_vessel_loa } : {}),
+      }, db)
+    )
+    return { data: result }
+  }, {
+    body: t.Object({
+      terminal_id:    t.String(),
+      code:           t.String(),
+      name:           t.String(),
+      length_m:       t.String(),
+      max_draft_m:    t.String(),
+      max_vessel_loa: t.Optional(t.String()),
+    }),
+    detail: { tags: ['Terminal'], summary: 'Create berth' },
+  })
 
   // GET /terminal/berths
   .get('/berths', async ({ user, query }) => {

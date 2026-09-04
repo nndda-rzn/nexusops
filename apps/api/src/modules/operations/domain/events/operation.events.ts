@@ -82,9 +82,11 @@ export interface InterventionExecutedEvent {
   targetOrgId: string
   operationId: string
   interventionType: string
+  proposedChanges: Record<string, unknown>   // L-02 FIX: added for execution
   occurredAt: Date
   executedAt: Date
   wasAutoApproved: boolean
+  respondedBy?: string | undefined           // L-02 FIX: added
 }
 
 export type OperationEvent =

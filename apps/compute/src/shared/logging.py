@@ -1,6 +1,8 @@
 import structlog
 import logging
+import sys
 from src.shared.config import settings
+
 
 def setup_logging() -> None:
     log_level = getattr(logging, settings.log_level.upper(), logging.INFO)
@@ -11,8 +13,11 @@ def setup_logging() -> None:
             structlog.contextvars.merge_contextvars,
             structlog.processors.add_log_level,
             structlog.processors.TimeStamper(fmt="iso"),
-            structlog.processors.JSONRenderer(),
+            structlog.dev.ConsoleRenderer() if settings.app_env == "development"
+            else structlog.processors.JSONRenderer(),
         ],
+        logger_factory=structlog.PrintLoggerFactory(file=sys.stdout),
     )
 
-logger = structlog.get_logger()
+
+logger: structlog.stdlib.BoundLogger = structlog.get_logger()  # type: ignore[assignment]

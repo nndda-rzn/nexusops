@@ -1,6 +1,7 @@
 import asyncio
 import json
 import signal
+import uuid
 from typing import Any
 
 from src.shared.config import settings
@@ -19,7 +20,8 @@ class RedisStreamWorker:
     def __init__(self, stream: str, handler_map: dict[str, Any]) -> None:
         self.stream = stream
         self.handler_map = handler_map
-        self.consumer_name = f"worker-{asyncio.get_event_loop().time()}"
+        # Use uuid for unique, reliable consumer name (not deprecated get_event_loop)
+        self.consumer_name = f"worker-{uuid.uuid4().hex[:8]}"
         self.group = settings.redis_consumer_group
         self.running = False
 
@@ -139,29 +141,32 @@ async def main() -> None:
     setup_logging()
     logger.info("NexusOps Compute Engine starting...")
 
-    # Graceful shutdown
-    loop = asyncio.get_event_loop()
+    # Use get_running_loop() instead of deprecated get_event_loop()
+    loop = asyncio.get_running_loop()
 
     workers: list[RedisStreamWorker] = []
+    shutdown_event = asyncio.Event()
 
     def handle_shutdown() -> None:
         logger.info("Shutdown signal received")
         for worker in workers:
             worker.stop()
+        shutdown_event.set()
 
     loop.add_signal_handler(signal.SIGTERM, handle_shutdown)
     loop.add_signal_handler(signal.SIGINT, handle_shutdown)
 
-    # TODO: Initialize workers per job type
-    # e.g. yard_optimization worker, berth_scheduling worker, etc.
-    # Will be added in feature/planning/* branches
+    # TODO: Initialize workers per job type in Phase 4
+    # e.g.:
+    # workers.append(RedisStreamWorker(
+    #     stream=f"{settings.redis_stream_prefix}:yard_optimization",
+    #     handler_map={"yard_optimization": yard_optimization_handler}
+    # ))
 
     logger.info("Compute engine ready, waiting for jobs...")
 
     try:
-        # Keep alive until shutdown
-        while True:
-            await asyncio.sleep(1)
+        await shutdown_event.wait()
     finally:
         await close_redis()
         await close_db()

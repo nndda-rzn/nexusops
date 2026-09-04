@@ -57,7 +57,7 @@ export function createApp() {
           { name: 'Rail' }, { name: 'Road' }, { name: 'Warehouse' },
           { name: 'Assets' }, { name: 'Maintenance' }, { name: 'Workforce' },
           { name: 'Planning' }, { name: 'Billing' }, { name: 'Analytics' },
-          { name: 'Intermodal' }, { name: 'Group' },
+          { name: 'Intermodal' }, { name: 'Group' }, { name: 'Shared Master' },
         ],
       },
       path: '/swagger',

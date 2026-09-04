@@ -1,6 +1,7 @@
 import { trains } from '@/shared/database/schema/rail'
 import { eq, and, sql } from 'drizzle-orm'
 import { normalizePagination, toOffset, paginate } from '@/shared/pagination'
+import { TrainNotFoundError } from '@/modules/rail/domain/errors/rail.errors'
 import type { DbContext } from '@/shared/database/client'
 
 export async function listTrainsQuery(
@@ -30,6 +31,6 @@ export async function listTrainsQuery(
 export async function getTrainQuery(id: string, orgId: string, db: DbContext) {
   const [row] = await db.select().from(trains)
     .where(and(eq(trains.id, id), eq(trains.orgId, orgId))).limit(1)
-  if (!row) return null
+  if (!row) throw new TrainNotFoundError(id)
   return row
 }

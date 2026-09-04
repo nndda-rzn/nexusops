@@ -1,6 +1,7 @@
 import { Elysia } from 'elysia'
 import { verifyJwt } from '@/shared/auth/jwt'
 import { withRequestContext } from '@/shared/database/client'
+import type { DbContext } from '@/shared/database/client'
 import { UnauthorizedError, ForbiddenError } from '@/shared/errors'
 import { getRedis, RedisKeys } from '@/shared/redis'
 import type { JwtPayload } from '@/shared/auth/jwt.types'
@@ -66,17 +67,20 @@ export const authMiddleware = new Elysia({ name: 'auth-middleware' })
 
 // ─────────────────────────────────────────
 // withDbContext — wraps a DB operation with RLS context
-// Use this in every handler that queries the database
 //
-// Usage:
-//   const vessels = await withDbContext(user, async (db) => {
-//     return db.select().from(maritime.vessels)
+// Use this in EVERY domain route handler that queries the database.
+// Pass the resulting db instance to command/query handlers.
+//
+// Pattern:
+//   .get('/vessels', async ({ user }) => {
+//     if (!user) throw new UnauthorizedError()
+//     return withDbContext(user, (db) => listVesselsQuery(filter, db))
 //   })
 // ─────────────────────────────────────────
 
 export async function withDbContext<T>(
   user: AuthUser,
-  fn: Parameters<typeof withRequestContext>[1]
+  fn: (db: DbContext) => Promise<T>
 ): Promise<T> {
   return withRequestContext(
     {
@@ -84,7 +88,7 @@ export async function withDbContext<T>(
       entityType: user.entityType,
       holdingId: user.holdingId,
     },
-    fn
+    fn as Parameters<typeof withRequestContext>[1]
   ) as Promise<T>
 }
 

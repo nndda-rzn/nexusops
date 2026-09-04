@@ -18,6 +18,7 @@ import { containerHoldRoutes } from '@/modules/containers/presentation/routes/co
 import { containerQueryRoutes } from '@/modules/containers/presentation/routes/container-queries.routes'
 import { berthRoutes } from '@/modules/terminal/presentation/routes/berth.routes'
 import { craneRoutes } from '@/modules/terminal/presentation/routes/crane.routes'
+import { terminalManagementRoutes } from '@/modules/terminal/presentation/routes/terminal-management.routes'
 import { shipmentRoutes } from '@/modules/shipments/presentation/routes/shipments.routes'
 import { intermodalRoutes } from '@/modules/intermodal/presentation/routes/intermodal.routes'
 
@@ -99,6 +100,7 @@ export function createApp() {
     .use(containerQueryRoutes)
     .use(berthRoutes)
     .use(craneRoutes)
+    .use(terminalManagementRoutes)
     .use(shipmentRoutes)
     .use(intermodalRoutes)
 }

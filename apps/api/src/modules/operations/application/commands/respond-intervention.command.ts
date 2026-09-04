@@ -55,9 +55,11 @@ export async function respondInterventionCommand(
       targetOrgId: intervention.targetOrgId,
       operationId: intervention.operationId,
       interventionType: intervention.interventionType,
+      proposedChanges: intervention.proposedChanges as Record<string, unknown> ?? {},
       occurredAt: new Date(),
       executedAt: new Date(),
       wasAutoApproved: false,
+      respondedBy: cmd.respondedBy,
     }
     await eventBus.emit('operation.intervention_executed', event)
   }

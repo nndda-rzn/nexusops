@@ -42,9 +42,11 @@ export async function processExpiredInterventionsCommand(
       targetOrgId: intervention.targetOrgId,
       operationId: intervention.operationId,
       interventionType: intervention.interventionType,
+      proposedChanges: intervention.proposedChanges as Record<string, unknown> ?? {},
       occurredAt: now,
       executedAt: now,
       wasAutoApproved: true,
+      respondedBy: 'SYSTEM',
     }
 
     await eventBus.emit('operation.intervention_executed', event)

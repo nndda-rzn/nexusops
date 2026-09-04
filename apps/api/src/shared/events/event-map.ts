@@ -56,6 +56,13 @@ import type {
   AssetInspectionCompletedEvent, AssetMaintenanceRequiredEvent,
 } from '@/modules/assets/domain/events/assets.events'
 
+// Maintenance
+import type {
+  MaintenanceWorkOrderCreatedEvent, MaintenanceWorkOrderStartedEvent,
+  MaintenanceWorkOrderCompletedEvent, MaintenanceWorkOrderClosedEvent,
+  MaintenanceFailureReportedEvent, MaintenancePartsRequestedEvent,
+} from '@/modules/maintenance/domain/events/maintenance.events'
+
 export interface HandoverRequestedEvent { type: 'intermodal.handover_requested'; handoverId: string; shipmentId: string; legId: string; fromEntityId: string; toEntityId: string; occurredAt: Date }
 export interface HandoverAcceptedEvent { type: 'intermodal.handover_accepted'; handoverId: string; shipmentId: string; legId?: string | undefined; fromEntityId: string; toEntityId: string; occurredAt: Date; respondedBy: string }
 export interface HandoverRejectedEvent { type: 'intermodal.handover_rejected'; handoverId: string; shipmentId: string; legId?: string | undefined; fromEntityId: string; toEntityId: string; occurredAt: Date; respondedBy: string; rejectionReason?: string | undefined }
@@ -164,4 +171,11 @@ export type EventMap = {
   'asset.operator_returned': AssetOperatorReturnedEvent
   'asset.inspection_completed': AssetInspectionCompletedEvent
   'asset.maintenance_required': AssetMaintenanceRequiredEvent
+  // Maintenance
+  'maintenance.workorder_created': MaintenanceWorkOrderCreatedEvent
+  'maintenance.workorder_started': MaintenanceWorkOrderStartedEvent
+  'maintenance.workorder_completed': MaintenanceWorkOrderCompletedEvent
+  'maintenance.workorder_closed': MaintenanceWorkOrderClosedEvent
+  'maintenance.failure_reported': MaintenanceFailureReportedEvent
+  'maintenance.parts_requested': MaintenancePartsRequestedEvent
 }

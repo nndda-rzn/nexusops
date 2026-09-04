@@ -39,6 +39,8 @@ import { employeeProfileRoutes } from '@/modules/workforce/presentation/routes/e
 import { workforceResourcesRoutes } from '@/modules/workforce/presentation/routes/workforce-resources.routes'
 import { assetsRoutes } from '@/modules/assets/presentation/routes/assets.routes'
 import { assetOperationsRoutes } from '@/modules/assets/presentation/routes/asset-operations.routes'
+import { workOrdersRoutes } from '@/modules/maintenance/presentation/routes/work-orders.routes'
+import { maintenanceResourcesRoutes } from '@/modules/maintenance/presentation/routes/maintenance-resources.routes'
 
 export function createApp() {
   return new Elysia()
@@ -121,4 +123,6 @@ export function createApp() {
     .use(workforceResourcesRoutes)
     .use(assetsRoutes)
     .use(assetOperationsRoutes)
+    .use(workOrdersRoutes)
+    .use(maintenanceResourcesRoutes)
 }

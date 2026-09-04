@@ -1,6 +1,6 @@
 import type { DbContext } from '@/shared/database/client'
 import { operations, operationEvents } from '@/shared/database/schema/operations'
-import { eq, and, desc, inArray } from 'drizzle-orm'
+import { eq, and, desc, inArray, sql } from 'drizzle-orm'
 import { Operation } from '@/modules/operations/domain/entities/operation.entity'
 import { OperationNotFoundError } from '@/modules/operations/domain/errors/operation.errors'
 import { generateId } from '@/shared/ids'
@@ -107,4 +107,23 @@ export async function listOperations(
     .orderBy(desc(operations.scheduledStart))
     .limit(limit).offset(offset)
   return rows.map(rowToOperation)
+}
+
+// Q-08 FIX: real COUNT(*) for pagination
+export async function countOperations(
+  orgId: string,
+  filter: {
+    status?: OperationStatus[] | undefined
+    type?: OperationType[] | undefined
+  },
+  db: DbContext
+): Promise<number> {
+  const conditions = [eq(operations.orgId, orgId)]
+  if (filter.status?.length) conditions.push(inArray(operations.status, filter.status))
+  if (filter.type?.length) conditions.push(inArray(operations.type, filter.type))
+  const [result] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(operations)
+    .where(and(...conditions))
+  return result?.count ?? 0
 }

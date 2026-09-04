@@ -1,5 +1,5 @@
 import { shipments, shipmentLegs, shipmentMilestones } from '@/shared/database/schema/shipments'
-import { eq, and, desc } from 'drizzle-orm'
+import { eq, and, desc, sql } from 'drizzle-orm'
 import { ShipmentNotFoundError } from '@/modules/shipments/domain/errors/shipment.errors'
 import { normalizePagination, toOffset, paginate } from '@/shared/pagination'
 import type { DbContext } from '@/shared/database/client'
@@ -35,17 +35,25 @@ export async function listShipmentsQuery(
     conditions.push(eq(shipments.status, filter.status as typeof shipments.$inferSelect['status']))
   }
 
-  const rows = await db.select({
-    id: shipments.id, shipmentType: shipments.shipmentType,
-    referenceNumber: shipments.referenceNumber, status: shipments.status,
-    origin: shipments.origin, destination: shipments.destination,
-    cargoType: shipments.cargoType, customerId: shipments.customerId,
-    createdAt: shipments.createdAt, updatedAt: shipments.updatedAt,
-  }).from(shipments)
-    .where(and(...conditions))
-    .orderBy(desc(shipments.updatedAt))
-    .limit(limit).offset(offset)
+  const whereClause = and(...conditions)
 
-  const total = rows.length < limit ? offset + rows.length : offset + rows.length + 1
+  // Q-08 FIX: run count and data queries in parallel
+  const [rows, [countResult]] = await Promise.all([
+    db.select({
+      id: shipments.id, shipmentType: shipments.shipmentType,
+      referenceNumber: shipments.referenceNumber, status: shipments.status,
+      origin: shipments.origin, destination: shipments.destination,
+      cargoType: shipments.cargoType, customerId: shipments.customerId,
+      createdAt: shipments.createdAt, updatedAt: shipments.updatedAt,
+    }).from(shipments)
+      .where(whereClause)
+      .orderBy(desc(shipments.updatedAt))
+      .limit(limit).offset(offset),
+    db.select({ count: sql<number>`count(*)::int` })
+      .from(shipments)
+      .where(whereClause),
+  ])
+
+  const total = countResult?.count ?? 0
   return paginate(rows, page, limit, total)
 }

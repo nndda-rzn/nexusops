@@ -6,6 +6,7 @@ import { departTrainCommand } from '@/modules/rail/application/commands/depart-t
 import { recordTrainArrivalCommand } from '@/modules/rail/application/commands/record-train-arrival.command'
 import { delayTrainCommand } from '@/modules/rail/application/commands/delay-train.command'
 import { cancelTrainCommand } from '@/modules/rail/application/commands/cancel-train.command'
+import { readyTrainCommand } from '@/modules/rail/application/commands/ready-train.command'
 
 export const trainLifecycleRoutes = new Elysia({ prefix: '/rail' })
   .use(authMiddleware)
@@ -17,6 +18,15 @@ export const trainLifecycleRoutes = new Elysia({ prefix: '/rail' })
     )
     return { data: { message: 'Loading started.' } }
   }, { detail: { tags: ['Rail'], summary: 'Start loading train' } })
+
+  // F-04 FIX: LOADING → READY_TO_DEPART — required before depart
+  .post('/trains/:id/ready', async ({ user, params }) => {
+    if (!user) throw new UnauthorizedError()
+    await withDbContext(user, (db) =>
+      readyTrainCommand({ trainId: params.id, orgId: user.orgId }, db)
+    )
+    return { data: { message: 'Train ready to depart.' } }
+  }, { detail: { tags: ['Rail'], summary: 'Mark train as ready to depart' } })
 
   .post('/trains/:id/depart', async ({ user, params, body }) => {
     if (!user) throw new UnauthorizedError()

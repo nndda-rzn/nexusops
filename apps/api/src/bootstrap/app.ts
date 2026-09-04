@@ -29,6 +29,9 @@ import { vesselsRoutes } from '@/modules/maritime/presentation/routes/vessels.ro
 import { voyagesRoutes } from '@/modules/maritime/presentation/routes/voyages.routes'
 import { portCallsRoutes } from '@/modules/maritime/presentation/routes/port-calls.routes'
 import { portCallLifecycleRoutes } from '@/modules/maritime/presentation/routes/port-call-lifecycle.routes'
+import { railResourcesRoutes } from '@/modules/rail/presentation/routes/rail-resources.routes'
+import { trainsRoutes } from '@/modules/rail/presentation/routes/trains.routes'
+import { trainLifecycleRoutes } from '@/modules/rail/presentation/routes/train-lifecycle.routes'
 
 export function createApp() {
   return new Elysia()
@@ -101,4 +104,7 @@ export function createApp() {
     .use(voyagesRoutes)
     .use(portCallsRoutes)
     .use(portCallLifecycleRoutes)
+    .use(railResourcesRoutes)
+    .use(trainsRoutes)
+    .use(trainLifecycleRoutes)
 }

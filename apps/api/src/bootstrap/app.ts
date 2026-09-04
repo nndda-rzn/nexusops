@@ -3,8 +3,8 @@ import { swagger } from '@elysiajs/swagger'
 import { cors } from '@elysiajs/cors'
 import { env } from '@/shared/config/env'
 import { logger } from '@/shared/logging'
-import { AppError } from '@/shared/errors'
 import { ulid } from 'ulid'
+import { errorHandler } from '@/bootstrap/error-handler'
 import { healthRoutes } from '@/bootstrap/health.routes'
 import { loginRoutes } from '@/modules/identity/presentation/routes/login.routes'
 import { tokenRoutes } from '@/modules/identity/presentation/routes/token.routes'
@@ -25,6 +25,8 @@ import { intermodalRoutes } from '@/modules/intermodal/presentation/routes/inter
 
 export function createApp() {
   return new Elysia()
+
+    .use(errorHandler)
 
     .use(cors({
       origin: env.CORS_ORIGINS.split(','),
@@ -64,28 +66,8 @@ export function createApp() {
     .onAfterHandle(({ set }) => {
       set.headers['X-Content-Type-Options'] = 'nosniff'
       set.headers['X-Frame-Options'] = 'DENY'
-      set.headers['X-XSS-Protection'] = '1; mode=block'
+      set.headers['X-XSX-Protection'] = '1; mode=block'
       set.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-    })
-
-    .onError(({ error, set, request }) => {
-      const traceId = ulid()
-      const pathname = new URL(request.url).pathname
-
-      if (error instanceof AppError) {
-        logger.warn('Application error', { error_type: error.type, status: error.status })
-        set.status = error.status
-        return { type: error.type, title: error.title, status: error.status, detail: error.detail, instance: pathname, trace_id: traceId, ...error.extensions }
-      }
-
-      logger.error('Unhandled error', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        trace_id: traceId,
-      })
-
-      set.status = 500
-      return { type: 'https://nexusops.io/errors/internal-server-error', title: 'Internal Server Error', status: 500, detail: 'An unexpected error occurred.', instance: pathname, trace_id: traceId }
     })
 
     .use(healthRoutes)

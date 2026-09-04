@@ -9,7 +9,7 @@ import {
   loginHistory,
 } from '@/shared/database/schema/identity'
 import { eq, and, isNull } from 'drizzle-orm'
-import { verify, hash } from 'argon2'
+import { verifyPassword, hashPassword } from '@/shared/auth/password'
 import { signJwt } from '@/shared/auth/jwt'
 import { generateId } from '@/shared/ids'
 import { env } from '@/shared/config/env'
@@ -54,7 +54,7 @@ export async function loginCommand(cmd: LoginCommand): Promise<LoginResult> {
     .limit(1)
 
   const validPassword = user
-    ? await verify(user.passwordHash, cmd.password).catch(() => false)
+    ? await verifyPassword(cmd.password, user.passwordHash).catch(() => false)
     : false
 
   if (!user || !validPassword) {
@@ -113,7 +113,7 @@ export async function loginCommand(cmd: LoginCommand): Promise<LoginResult> {
   await db.insert(refreshTokens).values({
     id: generateId(), userId: user.id, orgId: org.id,
     tokenPrefix,                                          // ← prefix stored
-    tokenHash: await hash(refreshTokenValue),
+    tokenHash: await hashPassword(refreshTokenValue),
     expiresAt: refreshExpiresAt,
     ipAddress: cmd.ipAddress, userAgent: cmd.userAgent,
   })

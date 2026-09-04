@@ -8,7 +8,7 @@ import {
   roles,
 } from '@/shared/database/schema/identity'
 import { eq, and, isNull } from 'drizzle-orm'
-import { verify } from 'argon2'
+import { verifyPassword } from '@/shared/auth/password'
 import { signJwt } from '@/shared/auth/jwt'
 import { InvalidRefreshTokenError } from '@/modules/identity/domain/errors/auth.errors'
 import type { JwtPayload } from '@/shared/auth/jwt.types'
@@ -43,7 +43,7 @@ export async function refreshTokenCommand(
   if (tokenRow.expiresAt < new Date()) throw new InvalidRefreshTokenError()
 
   // Verify argon2 hash — only 1 row now, not N rows
-  const isValid = await verify(tokenRow.tokenHash, cmd.refreshToken).catch(() => false)
+  const isValid = await verifyPassword(cmd.refreshToken, tokenRow.tokenHash).catch(() => false)
   if (!isValid) throw new InvalidRefreshTokenError()
 
   // Revoke used refresh token (rotation)

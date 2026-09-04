@@ -9,6 +9,15 @@ import { healthRoutes } from '@/bootstrap/health.routes'
 import { loginRoutes } from '@/modules/identity/presentation/routes/login.routes'
 import { tokenRoutes } from '@/modules/identity/presentation/routes/token.routes'
 import { entityRoutes } from '@/modules/identity/presentation/routes/entity.routes'
+import { operationCommandRoutes } from '@/modules/operations/presentation/routes/operation-commands.routes'
+import { listOperationsRoutes } from '@/modules/operations/presentation/routes/list-operations.routes'
+import { operationDependencyRoutes } from '@/modules/operations/presentation/routes/operation-dependencies.routes'
+import { interventionRoutes } from '@/modules/operations/presentation/routes/intervention.routes'
+import { containerRoutes } from '@/modules/containers/presentation/routes/containers.routes'
+import { berthRoutes } from '@/modules/terminal/presentation/routes/berth.routes'
+import { craneRoutes } from '@/modules/terminal/presentation/routes/crane.routes'
+import { shipmentRoutes } from '@/modules/shipments/presentation/routes/shipments.routes'
+import { intermodalRoutes } from '@/modules/intermodal/presentation/routes/intermodal.routes'
 
 export function createApp() {
   return new Elysia()
@@ -79,4 +88,13 @@ export function createApp() {
     .use(loginRoutes)
     .use(tokenRoutes)
     .use(entityRoutes)
+    .use(operationCommandRoutes)
+    .use(listOperationsRoutes)
+    .use(operationDependencyRoutes)
+    .use(interventionRoutes)
+    .use(containerRoutes)
+    .use(berthRoutes)
+    .use(craneRoutes)
+    .use(shipmentRoutes)
+    .use(intermodalRoutes)
 }

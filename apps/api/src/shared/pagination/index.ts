@@ -3,8 +3,8 @@
 // ─────────────────────────────────────────
 
 export interface PaginationParams {
-  page?: number
-  limit?: number
+  page?: number | undefined
+  limit?: number | undefined
 }
 
 export interface PaginationMeta {
@@ -28,7 +28,7 @@ export const MAX_LIMIT = 100
 /**
  * Normalize pagination params with defaults and bounds
  */
-export function normalizePagination(params: PaginationParams): Required<PaginationParams> {
+export function normalizePagination(params: PaginationParams): { page: number; limit: number } {
   const page = Math.max(1, params.page ?? DEFAULT_PAGE)
   const limit = Math.min(MAX_LIMIT, Math.max(1, params.limit ?? DEFAULT_LIMIT))
   return { page, limit }

@@ -43,19 +43,30 @@ export async function respondHandoverCommand(
     ...(cmd.rejectionReason ? { rejectionReason: cmd.rejectionReason } : {}),
   }, db)
 
-  const eventType = cmd.response === 'ACCEPT'
-    ? 'intermodal.handover_accepted'
-    : 'intermodal.handover_rejected'
-
-  await eventBus.emit(eventType, {
-    type: eventType,
-    handoverId: cmd.handoverId,
-    shipmentId: handover.shipmentId,
-    legId: handover.legId,
-    fromEntityId: handover.fromEntityId,
-    toEntityId: handover.toEntityId,
-    occurredAt: now,
-    respondedBy: cmd.respondedBy,
-    ...(cmd.rejectionReason ? { rejectionReason: cmd.rejectionReason } : {}),
-  })
+  // P-01 FIX: use separate emit calls with literal string keys
+  // — avoids eventType being inferred as string which breaks typed EventMap
+  if (cmd.response === 'ACCEPT') {
+    await eventBus.emit('intermodal.handover_accepted', {
+      type: 'intermodal.handover_accepted',
+      handoverId: cmd.handoverId,
+      shipmentId: handover.shipmentId,
+      legId: handover.legId ?? undefined,
+      fromEntityId: handover.fromEntityId,
+      toEntityId: handover.toEntityId,
+      occurredAt: now,
+      respondedBy: cmd.respondedBy,
+    })
+  } else {
+    await eventBus.emit('intermodal.handover_rejected', {
+      type: 'intermodal.handover_rejected',
+      handoverId: cmd.handoverId,
+      shipmentId: handover.shipmentId,
+      legId: handover.legId ?? undefined,
+      fromEntityId: handover.fromEntityId,
+      toEntityId: handover.toEntityId,
+      occurredAt: now,
+      respondedBy: cmd.respondedBy,
+      ...(cmd.rejectionReason ? { rejectionReason: cmd.rejectionReason } : {}),
+    })
+  }
 }

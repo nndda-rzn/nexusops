@@ -44,6 +44,7 @@ export async function insertTrain(props: TrainProps, db: DbContext): Promise<voi
     trainNumber: props.trainNumber, trainsetId: props.trainsetId,
     scheduledDeparture: props.scheduledDeparture, scheduledArrival: props.scheduledArrival,
     status: props.status, delayMinutes: props.delayMinutes,
+    delayReason: props.delayReason,  // P-02 FIX: persist delayReason on initial insert
     createdAt: props.createdAt, updatedAt: props.updatedAt,
   })
 }

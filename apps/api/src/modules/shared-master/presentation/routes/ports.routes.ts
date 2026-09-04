@@ -1,7 +1,6 @@
 import { Elysia, t } from 'elysia'
-import { authMiddleware, withDbContext } from '@/shared/auth/middleware'
+import { authMiddleware, withDbContext, requireHolding } from '@/shared/auth/middleware'
 import { UnauthorizedError } from '@/shared/errors'
-import { requireHolding } from '@/shared/auth/middleware'
 import { listPortsQuery, getPortQuery } from '@/modules/shared-master/application/queries/list-ports.query'
 import { createPortCommand } from '@/modules/shared-master/application/commands/create-port.command'
 

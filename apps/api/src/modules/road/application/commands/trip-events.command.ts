@@ -1,6 +1,5 @@
 import { findTripByIdOrFail, saveTrip } from '@/modules/road/infrastructure/repositories/trip.repository'
-import { checkpoints } from '@/shared/database/schema/road'
-import { vehicles } from '@/shared/database/schema/road'
+import { checkpoints, vehicles } from '@/shared/database/schema/road'
 import { eq, and } from 'drizzle-orm'
 import { generateId } from '@/shared/ids'
 import { eventBus } from '@/shared/events'
@@ -12,6 +11,8 @@ export async function delayTripCommand(
 ): Promise<void> {
   const trip = await findTripByIdOrFail(cmd.tripId, cmd.orgId, db)
   trip.delay(cmd.delayMinutes)
+  // Q-03: transition to DELAYED only if currently EN_ROUTE or AT_CHECKPOINT.
+  // If trip is already DELAYED, delay() still accumulates minutes without re-transitioning.
   if (trip.status === 'EN_ROUTE' || trip.status === 'AT_CHECKPOINT') {
     trip.transition('DELAYED')
   }

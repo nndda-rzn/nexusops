@@ -1,4 +1,4 @@
-import { trainServices, trainsets } from '@/shared/database/schema/rail'
+import { trainServices, trainsets, platformAssignments } from '@/shared/database/schema/rail'
 import { eq, and, sql } from 'drizzle-orm'
 import { normalizePagination, toOffset, paginate } from '@/shared/pagination'
 import type { DbContext } from '@/shared/database/client'
@@ -36,7 +36,6 @@ export async function listTrainsetsQuery(
 export async function getPlatformAssignmentsQuery(
   trainId: string, orgId: string, db: DbContext
 ) {
-  const { platformAssignments } = await import('@/shared/database/schema/rail')
   return db.select().from(platformAssignments)
     .where(and(eq(platformAssignments.trainId, trainId), eq(platformAssignments.orgId, orgId)))
 }

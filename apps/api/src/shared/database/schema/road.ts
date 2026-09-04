@@ -152,4 +152,6 @@ export const vehiclePositions = roadSchema.table('vehicle_positions', {
   recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull(),
 }, (t) => [
   index('vehicle_positions_vehicle_time_idx').on(t.vehicleId, t.recordedAt),
+  // Q-13: GIST spatial index on position — defined in migration 0015, not supported by Drizzle natively
+  // CREATE INDEX vehicle_positions_geom_idx ON road.vehicle_positions USING GIST (position);
 ])

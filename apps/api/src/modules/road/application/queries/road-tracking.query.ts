@@ -1,5 +1,6 @@
 import { checkpoints, vehiclePositions } from '@/shared/database/schema/road'
 import { eq, and, desc } from 'drizzle-orm'
+import { DEFAULT_POSITION_LIMIT } from '@/shared/pagination/query-helpers'
 import type { DbContext } from '@/shared/database/client'
 
 export async function getTripCheckpointsQuery(
@@ -11,7 +12,7 @@ export async function getTripCheckpointsQuery(
 }
 
 export async function getVehiclePositionsQuery(
-  vehicleId: string, db: DbContext, limit = 100
+  vehicleId: string, db: DbContext, limit = DEFAULT_POSITION_LIMIT
 ) {
   return db.select().from(vehiclePositions)
     .where(eq(vehiclePositions.vehicleId, vehicleId))

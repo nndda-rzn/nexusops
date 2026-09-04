@@ -15,33 +15,39 @@ export async function releaseHoldCommand(
   cmd: ReleaseHoldCommand,
   db: DbContext
 ): Promise<void> {
-  const [hold] = await db
-    .select()
-    .from(containerHolds)
-    .where(and(
-      eq(containerHolds.id, cmd.holdId),
-      eq(containerHolds.containerId, cmd.containerId),
-      eq(containerHolds.status, 'ACTIVE'),
-    ))
-    .limit(1)
+  const event = await db.transaction(async (tx) => {
+    const [hold] = await tx
+      .select()
+      .from(containerHolds)
+      .where(and(
+        eq(containerHolds.id, cmd.holdId),
+        eq(containerHolds.containerId, cmd.containerId),
+        eq(containerHolds.orgId, cmd.orgId),
+        eq(containerHolds.status, 'ACTIVE'),
+      ))
+      .limit(1)
 
-  if (!hold) throw new NotFoundError('ContainerHold', cmd.holdId)
+    if (!hold) throw new NotFoundError('ContainerHold', cmd.holdId)
 
-  await db.update(containerHolds)
-    .set({
-      status: 'RELEASED',
-      releasedBy: cmd.releasedBy,
-      releasedAt: new Date(),
-    })
-    .where(eq(containerHolds.id, cmd.holdId))
+    const now = new Date()
+    await tx.update(containerHolds)
+      .set({ status: 'RELEASED', releasedBy: cmd.releasedBy, releasedAt: now })
+      .where(and(
+        eq(containerHolds.id, cmd.holdId),
+        eq(containerHolds.orgId, cmd.orgId),
+      ))
 
-  await eventBus.emit('container.released', {
+    return {
     type: 'container.released',
     containerId: cmd.containerId,
     orgId: cmd.orgId,
     holdId: cmd.holdId,
     holdType: hold.holdType,
-    occurredAt: new Date(),
+    occurredAt: now,
     actorId: cmd.releasedBy,
+    }
   })
+
+  // Publish only after the transaction has committed.
+  await eventBus.emit('container.released', event)
 }

@@ -3,7 +3,7 @@ import {
   containerMovements,
   containerHolds,
 } from "@/shared/database/schema/containers";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { ContainerNotFoundError } from "@/modules/containers/domain/errors/container.errors";
 import { normalizePagination, toOffset, paginate } from "@/shared/pagination";
 import type { DbContext } from "@/shared/database/client";
@@ -30,33 +30,37 @@ export async function listContainersQuery(
   if (filter.shipmentId)
     conditions.push(eq(containerUnits.shipmentId, filter.shipmentId));
 
-  const rows = await db
-    .select({
-      id: containerUnits.id,
-      orgId: containerUnits.orgId,
-      containerNumber: containerUnits.containerNumber,
-      type: containerUnits.type,
-      size: containerUnits.size,
-      status: containerUnits.status,
-      currentLocationType: containerUnits.currentLocationType,
-      currentLocationId: containerUnits.currentLocationId,
-      shipmentId: containerUnits.shipmentId,
-      isHazmat: containerUnits.isHazmat,
-      createdAt: containerUnits.createdAt,
-      updatedAt: containerUnits.updatedAt,
-    })
-    .from(containerUnits)
-    .where(and(...conditions))
-    .orderBy(desc(containerUnits.updatedAt))
-    .limit(limit)
-    .offset(offset);
+  const whereClause = and(...conditions)
 
-  return paginate(
-    rows,
-    page,
-    limit,
-    rows.length < limit ? offset + rows.length : offset + rows.length + 1,
-  );
+  const [rows, [countResult]] = await Promise.all([
+    db
+      .select({
+        id: containerUnits.id,
+        orgId: containerUnits.orgId,
+        containerNumber: containerUnits.containerNumber,
+        type: containerUnits.type,
+        size: containerUnits.size,
+        status: containerUnits.status,
+        currentLocationType: containerUnits.currentLocationType,
+        currentLocationId: containerUnits.currentLocationId,
+        shipmentId: containerUnits.shipmentId,
+        isHazmat: containerUnits.isHazmat,
+        createdAt: containerUnits.createdAt,
+        updatedAt: containerUnits.updatedAt,
+      })
+      .from(containerUnits)
+      .where(whereClause)
+      .orderBy(desc(containerUnits.updatedAt))
+      .limit(limit)
+      .offset(offset),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(containerUnits)
+      .where(whereClause),
+  ])
+
+  const total = countResult?.count ?? 0
+  return paginate(rows, page, limit, total);
 }
 
 export async function getContainerMovementsQuery(

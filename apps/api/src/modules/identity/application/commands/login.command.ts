@@ -107,10 +107,12 @@ export async function loginCommand(cmd: LoginCommand): Promise<LoginResult> {
 
   const { accessToken, expiresIn } = await signJwt(payload)
   const refreshTokenValue = generateId() + generateId() + generateId()
+  const tokenPrefix = refreshTokenValue.substring(0, 8)  // S-05 FIX: store prefix for fast lookup
   const refreshExpiresAt = new Date(Date.now() + parseExpiry(env.JWT_REFRESH_EXPIRES_IN) * 1000)
 
   await db.insert(refreshTokens).values({
     id: generateId(), userId: user.id, orgId: org.id,
+    tokenPrefix,                                          // ← prefix stored
     tokenHash: await hash(refreshTokenValue),
     expiresAt: refreshExpiresAt,
     ipAddress: cmd.ipAddress, userAgent: cmd.userAgent,

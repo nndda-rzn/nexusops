@@ -137,6 +137,7 @@ export const refreshTokens = identitySchema.table('refresh_tokens', {
   id: text('id').primaryKey().$defaultFn(() => ulid()),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   orgId: text('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  tokenPrefix: text('token_prefix').notNull(),  // S-05 FIX: 8-char prefix for fast lookup
   tokenHash: text('token_hash').notNull(),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -146,6 +147,7 @@ export const refreshTokens = identitySchema.table('refresh_tokens', {
 }, (t) => [
   index('refresh_tokens_user_id_idx').on(t.userId),
   index('refresh_tokens_expires_at_idx').on(t.expiresAt),
+  index('refresh_tokens_prefix_idx').on(t.tokenPrefix),  // ← fast prefix lookup
 ])
 
 // Login History

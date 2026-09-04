@@ -79,10 +79,12 @@ export async function switchEntityCommand(
 
   const { accessToken, expiresIn } = await signJwt(payload)
   const refreshTokenValue = generateId() + generateId() + generateId()
+  const tokenPrefix = refreshTokenValue.substring(0, 8)  // S-05 FIX: store prefix
   const refreshExpiresAt = new Date(Date.now() + parseExpiry(env.JWT_REFRESH_EXPIRES_IN) * 1000)
 
   await db.insert(refreshTokens).values({
     id: generateId(), userId: user.id, orgId: targetOrg.id,
+    tokenPrefix,                                          // ← prefix stored
     tokenHash: await hash(refreshTokenValue),
     expiresAt: refreshExpiresAt,
   })

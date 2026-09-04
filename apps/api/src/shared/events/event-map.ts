@@ -42,9 +42,12 @@ import type {
   TerminalBerthCreatedEvent, TerminalCraneCreatedEvent,
 } from '@/modules/terminal/domain/events/terminal.events'
 
-// ─────────────────────────────────────────
-// Inline event types (no dedicated event files yet)
-// ─────────────────────────────────────────
+// Workforce
+import type {
+  EmployeeRegisteredEvent, EmployeeStatusChangedEvent,
+  WorkforceAssignedEvent, WorkforceAssignmentCompletedEvent,
+  CertificationExpiringEvent,
+} from '@/modules/workforce/domain/events/workforce.events'
 
 export interface HandoverRequestedEvent { type: 'intermodal.handover_requested'; handoverId: string; shipmentId: string; legId: string; fromEntityId: string; toEntityId: string; occurredAt: Date }
 export interface HandoverAcceptedEvent { type: 'intermodal.handover_accepted'; handoverId: string; shipmentId: string; legId?: string | undefined; fromEntityId: string; toEntityId: string; occurredAt: Date; respondedBy: string }
@@ -141,4 +144,10 @@ export type EventMap = {
   'intermodal.handover_rejected': HandoverRejectedEvent
   'intermodal.handover_completed': HandoverCompletedEvent
   'intermodal.handover_cancelled': HandoverCancelledEvent
+  // Workforce
+  'workforce.employee_registered': EmployeeRegisteredEvent
+  'workforce.employee_status_changed': EmployeeStatusChangedEvent
+  'workforce.assigned': WorkforceAssignedEvent
+  'workforce.assignment_completed': WorkforceAssignmentCompletedEvent
+  'workforce.certification_expiring': CertificationExpiringEvent
 }

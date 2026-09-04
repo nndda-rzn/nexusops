@@ -34,6 +34,9 @@ import { trainsRoutes } from '@/modules/rail/presentation/routes/trains.routes'
 import { trainLifecycleRoutes } from '@/modules/rail/presentation/routes/train-lifecycle.routes'
 import { vehiclesRoutes } from '@/modules/road/presentation/routes/vehicles.routes'
 import { tripsRoutes } from '@/modules/road/presentation/routes/trips.routes'
+import { employeesRoutes } from '@/modules/workforce/presentation/routes/employees.routes'
+import { employeeProfileRoutes } from '@/modules/workforce/presentation/routes/employee-profile.routes'
+import { workforceResourcesRoutes } from '@/modules/workforce/presentation/routes/workforce-resources.routes'
 
 export function createApp() {
   return new Elysia()
@@ -111,4 +114,7 @@ export function createApp() {
     .use(trainLifecycleRoutes)
     .use(vehiclesRoutes)
     .use(tripsRoutes)
+    .use(employeesRoutes)
+    .use(employeeProfileRoutes)
+    .use(workforceResourcesRoutes)
 }

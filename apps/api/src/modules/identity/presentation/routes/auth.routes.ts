@@ -1,8 +1,11 @@
 import { Elysia, t } from 'elysia'
 import { loginHandler, switchEntityHandler } from '@/modules/identity/application/commands/auth.commands'
+import { authMiddleware, requireHolding } from '@/shared/auth/middleware'
+import { UnauthorizedError } from '@/shared/errors'
 import { logger } from '@/shared/logging'
 
 export const authRoutes = new Elysia({ prefix: '/auth' })
+  .use(authMiddleware)
 
   // ─────────────────────────────────────────
   // POST /auth/login
@@ -61,17 +64,19 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
   // ─────────────────────────────────────────
   // GET /auth/me
   // ─────────────────────────────────────────
-  .get('/me', async ({ headers }) => {
-    // Returns current user context from JWT
-    // Auth middleware will be added in feature/auth/rbac-middleware
-    const authHeader = headers.authorization
-    if (!authHeader?.startsWith('Bearer ')) {
-      return { data: null }
-    }
+  .get('/me', async ({ user }) => {
+    if (!user) throw new UnauthorizedError()
 
     return {
       data: {
-        message: 'Auth middleware coming in next branch',
+        id: user.id,
+        org_id: user.orgId,
+        entity_type: user.entityType,
+        role: user.role,
+        permissions: user.permissions,
+        modules: user.modules,
+        holding_id: user.holdingId,
+        switched_from: user.switchedFrom,
       },
     }
   }, {

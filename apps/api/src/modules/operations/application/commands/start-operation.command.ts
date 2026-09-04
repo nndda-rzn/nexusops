@@ -9,6 +9,7 @@ import type { OperationStartedEvent } from '@/modules/operations/domain/events/o
 
 export interface StartOperationCommand {
   operationId: string
+  orgId: string
   actorId: string
 }
 
@@ -16,7 +17,7 @@ export async function startOperationCommand(
   cmd: StartOperationCommand,
   db: DbContext
 ): Promise<void> {
-  const operation = await findOperationByIdOrFail(cmd.operationId, db)
+  const operation = await findOperationByIdOrFail(cmd.operationId, cmd.orgId, db)
 
   operation.start()
   await saveOperation(operation, db)

@@ -6,6 +6,7 @@ import { logger } from '@/shared/logging'
 import { AppError } from '@/shared/errors'
 import { ulid } from 'ulid'
 import { authRoutes } from '@/modules/identity/presentation/routes/auth.routes'
+import { entityRoutes } from '@/modules/identity/presentation/routes/entity.routes'
 
 export function createApp() {
   const app = new Elysia()
@@ -166,6 +167,7 @@ export function createApp() {
     // Routes
     // ─────────────────────────────────────────
     .use(authRoutes)
+    .use(entityRoutes)
 
   return app
 }

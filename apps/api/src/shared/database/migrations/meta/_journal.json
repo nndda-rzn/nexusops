@@ -134,6 +134,13 @@
       "when": 1788571443621,
       "tag": "0018_phase3_assets",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1788572249173,
+      "tag": "0019_phase3_maintenance",
+      "breakpoints": true
     }
   ]
 }

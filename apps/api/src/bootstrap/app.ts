@@ -11,6 +11,7 @@ import { tokenRoutes } from '@/modules/identity/presentation/routes/token.routes
 import { entityRoutes } from '@/modules/identity/presentation/routes/entity.routes'
 import { operationCommandRoutes } from '@/modules/operations/presentation/routes/operation-commands.routes'
 import { listOperationsRoutes } from '@/modules/operations/presentation/routes/list-operations.routes'
+import { operationDependencyRoutes } from '@/modules/operations/presentation/routes/operation-dependencies.routes'
 
 export function createApp() {
   return new Elysia()
@@ -83,4 +84,5 @@ export function createApp() {
     .use(entityRoutes)
     .use(operationCommandRoutes)
     .use(listOperationsRoutes)
+    .use(operationDependencyRoutes)
 }

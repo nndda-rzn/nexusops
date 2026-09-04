@@ -1,5 +1,6 @@
 import postgres from 'postgres'
 import { drizzle } from 'drizzle-orm/postgres-js'
+import { type PostgresJsDatabase, type PostgresJsTransaction } from 'drizzle-orm/postgres-js'
 import { sql } from 'drizzle-orm'
 import { env } from '@/shared/config/env'
 import { logger } from '@/shared/logging'
@@ -33,7 +34,11 @@ export const migrationDb = drizzle(migrationClient)
 //   - Dev utilities (seed.ts, reset.ts, migrate.ts)
 // ─────────────────────────────────────────
 
-export type DbContext = ReturnType<typeof drizzle<Record<string, never>>>
+// DbContext covers both the top-level db instance and the transaction object
+// passed inside .transaction() callbacks — both are valid injection targets.
+export type DbContext =
+  | PostgresJsDatabase<Record<string, never>>
+  | PostgresJsTransaction<Record<string, never>, Record<string, never>>
 
 // ─────────────────────────────────────────
 // withRequestContext — R-01 FIX
@@ -63,7 +68,7 @@ export interface RequestContext {
 
 export async function withRequestContext<T>(
   context: RequestContext,
-  fn: (db: ReturnType<typeof drizzle>) => Promise<T>
+  fn: (db: DbContext) => Promise<T>
 ): Promise<T> {
   const reservedClient = await queryClient.reserve()
 
@@ -82,7 +87,7 @@ export async function withRequestContext<T>(
           set_config('app.intervention_mode', ${context.interventionMode ? 'true' : 'false'},     true)
       `)
 
-      return await fn(tx as unknown as ReturnType<typeof drizzle>)
+      return await fn(tx)
     })
   } finally {
     await reservedClient.release()

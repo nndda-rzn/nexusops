@@ -88,8 +88,8 @@ export async function withDbContext<T>(
       entityType: user.entityType,
       holdingId: user.holdingId,
     },
-    fn as Parameters<typeof withRequestContext>[1]
-  ) as Promise<T>
+    fn
+  )
 }
 
 // ─────────────────────────────────────────

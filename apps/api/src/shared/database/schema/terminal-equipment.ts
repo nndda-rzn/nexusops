@@ -1,11 +1,12 @@
 import {
-  pgSchema, text, timestamp, integer, pgEnum, index,
+  pgSchema, text, timestamp, integer, index,
 } from 'drizzle-orm/pg-core'
 import { ulid } from 'ulid'
 
 export const terminalEquipmentSchema = pgSchema('terminal')
 
-export const equipmentAssignmentStatusEnum = pgEnum('equipment_assignment_status', [
+// D-03 FIX: use terminalEquipmentSchema.enum() not pgEnum() (public schema)
+export const equipmentAssignmentStatusEnum = terminalEquipmentSchema.enum('equipment_assignment_status', [
   'PLANNED', 'ACTIVE', 'COMPLETED', 'CANCELLED',
 ])
 

@@ -8,6 +8,20 @@
       "when": 1788488752089,
       "tag": "0000_normal_loki",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788531127609,
+      "tag": "0001_identity_indexes_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788491581457,
+      "tag": "0002_flippant_quentin_quire",
+      "breakpoints": true
     }
   ]
 }

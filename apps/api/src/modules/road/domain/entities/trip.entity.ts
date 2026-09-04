@@ -1,3 +1,5 @@
+import { InvalidTripTransitionError } from '../errors/invalid-trip-transition.error'
+
 export type TripStatus =
   | 'PLANNED' | 'ASSIGNED' | 'DISPATCHED' | 'EN_ROUTE'
   | 'AT_CHECKPOINT' | 'ARRIVED_DESTINATION' | 'DELIVERING'
@@ -53,7 +55,7 @@ export class Trip {
   transition(to: TripStatus): void {
     const allowed = VALID_TRANSITIONS[this.props.status] ?? []
     if (!allowed.includes(to)) {
-      throw new Error(`Cannot transition trip from '${this.props.status}' to '${to}'.`)
+      throw new InvalidTripTransitionError(this.props.status, to)
     }
     this.props.status = to
     this.props.updatedAt = new Date()

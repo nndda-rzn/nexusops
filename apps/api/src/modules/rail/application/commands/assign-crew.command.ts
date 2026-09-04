@@ -1,6 +1,7 @@
 import { findTrainByIdOrFail, saveTrain } from '@/modules/rail/infrastructure/repositories/train.repository'
 import { crewAssignments } from '@/shared/database/schema/rail'
 import { generateId } from '@/shared/ids'
+import { DomainError } from '@/shared/errors'
 import type { DbContext } from '@/shared/database/client'
 
 export interface AssignCrewCommand {
@@ -21,8 +22,11 @@ export async function assignCrewCommand(cmd: AssignCrewCommand, db: DbContext): 
     train.transition('CREW_ASSIGNED')
     await saveTrain(train, db)
   } else if (train.status !== 'CREW_ASSIGNED') {
-    throw new Error(
-      `Cannot assign crew to train in status '${train.status}'. Train must be TRAINSET_ASSIGNED or CREW_ASSIGNED.`
+    throw new DomainError(
+      'invalid-train-status-for-crew',
+      'Invalid Train Status',
+      `Cannot assign crew to train in status '${train.status}'. Train must be TRAINSET_ASSIGNED or CREW_ASSIGNED.`,
+      { train_id: cmd.trainId, status: train.status }
     )
   }
 

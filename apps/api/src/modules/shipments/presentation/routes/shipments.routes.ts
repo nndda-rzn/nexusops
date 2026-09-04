@@ -4,6 +4,7 @@ import { UnauthorizedError } from '@/shared/errors'
 import { createShipmentCommand } from '@/modules/shipments/application/commands/create-shipment.command'
 import { updateShipmentStatusCommand } from '@/modules/shipments/application/commands/update-shipment-status.command'
 import { getShipmentQuery, listShipmentsQuery } from '@/modules/shipments/application/queries/shipment.queries'
+import { parsePaginationQuery } from '@/shared/pagination/query-helpers'
 
 export const shipmentRoutes = new Elysia({ prefix: '/shipments' })
   .use(authMiddleware)
@@ -14,8 +15,7 @@ export const shipmentRoutes = new Elysia({ prefix: '/shipments' })
     return withDbContext(user, (db) =>
       listShipmentsQuery(user.orgId, {
         status: query.status,
-        page: query.page ? Number(query.page) : undefined,
-        limit: query.limit ? Number(query.limit) : undefined,
+        ...parsePaginationQuery(query),
       }, db)
     )
   }, {

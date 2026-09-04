@@ -3,6 +3,7 @@ import { authMiddleware, withDbContext, requireHolding } from '@/shared/auth/mid
 import { UnauthorizedError } from '@/shared/errors'
 import { listAirportsQuery, getAirportQuery } from '@/modules/shared-master/application/queries/list-airports.query'
 import { createAirportCommand } from '@/modules/shared-master/application/commands/create-airport.command'
+import { parsePaginationQuery } from '@/shared/pagination/query-helpers'
 
 export const airportsRoutes = new Elysia({ prefix: '/shared-master' })
   .use(authMiddleware)
@@ -12,8 +13,7 @@ export const airportsRoutes = new Elysia({ prefix: '/shared-master' })
     if (!user) throw new UnauthorizedError()
     const result = await withDbContext(user, (db) =>
       listAirportsQuery(db, {
-        ...(query.page ? { page: Number(query.page) } : {}),
-        ...(query.limit ? { limit: Number(query.limit) } : {}),
+        ...parsePaginationQuery(query),
       })
     )
     return result

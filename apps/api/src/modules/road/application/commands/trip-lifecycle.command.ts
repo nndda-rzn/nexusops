@@ -8,8 +8,38 @@ import { ForbiddenError, DomainError } from "@/shared/errors";
 import { eventBus } from "@/shared/events";
 import type { DbContext } from "@/shared/database/client";
 
+export interface AssignTripCommand {
+  tripId: string;
+  orgId: string;
+  vehicleId: string;
+  driverId: string;
+}
+
+export interface DispatchTripCommand {
+  tripId: string;
+  orgId: string;
+  dispatcherId: string;
+}
+
+export interface DepartTripCommand {
+  tripId: string;
+  orgId: string;
+  actualDeparture?: Date | undefined;
+}
+
+export interface ArriveTripCommand {
+  tripId: string;
+  orgId: string;
+  actualArrival?: Date | undefined;
+}
+
+export interface CompleteTripCommand {
+  tripId: string;
+  orgId: string;
+}
+
 export async function assignTripCommand(
-  cmd: { tripId: string; orgId: string; vehicleId: string; driverId: string },
+  cmd: AssignTripCommand,
   db: DbContext,
 ): Promise<void> {
   const trip = await findTripByIdOrFail(cmd.tripId, cmd.orgId, db);
@@ -58,7 +88,7 @@ export async function assignTripCommand(
 }
 
 export async function dispatchTripCommand(
-  cmd: { tripId: string; orgId: string; dispatcherId: string },
+  cmd: DispatchTripCommand,
   db: DbContext,
 ): Promise<void> {
   const trip = await findTripByIdOrFail(cmd.tripId, cmd.orgId, db);
@@ -78,7 +108,7 @@ export async function dispatchTripCommand(
 }
 
 export async function departTripCommand(
-  cmd: { tripId: string; orgId: string; actualDeparture?: Date },
+  cmd: DepartTripCommand,
   db: DbContext,
 ): Promise<void> {
   const trip = await findTripByIdOrFail(cmd.tripId, cmd.orgId, db);
@@ -98,7 +128,7 @@ export async function departTripCommand(
 }
 
 export async function arriveTripCommand(
-  cmd: { tripId: string; orgId: string; actualArrival?: Date },
+  cmd: ArriveTripCommand,
   db: DbContext,
 ): Promise<void> {
   const trip = await findTripByIdOrFail(cmd.tripId, cmd.orgId, db);
@@ -118,7 +148,7 @@ export async function arriveTripCommand(
 }
 
 export async function completeTripCommand(
-  cmd: { tripId: string; orgId: string },
+  cmd: CompleteTripCommand,
   db: DbContext,
 ): Promise<void> {
   const trip = await findTripByIdOrFail(cmd.tripId, cmd.orgId, db);

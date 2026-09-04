@@ -4,6 +4,7 @@ import { UnauthorizedError } from '@/shared/errors'
 import { dischargeContainerCommand } from '@/modules/containers/application/commands/discharge-container.command'
 import { gateInContainerCommand } from '@/modules/containers/application/commands/gate-in-container.command'
 import { listContainersQuery, getContainerMovementsQuery, getContainerHoldsQuery } from '@/modules/containers/application/queries/container-list.queries'
+import { parsePaginationQuery } from '@/shared/pagination/query-helpers'
 import type { ContainerStatus } from '@/modules/containers/domain/entities/container.entity'
 
 export const containerQueryRoutes = new Elysia({ prefix: '/containers' })
@@ -16,8 +17,7 @@ export const containerQueryRoutes = new Elysia({ prefix: '/containers' })
       listContainersQuery(user.orgId, {
         ...(query.status ? { status: query.status as ContainerStatus } : {}),
         ...(query.shipment_id ? { shipmentId: query.shipment_id } : {}),
-        page: query.page ? Number(query.page) : undefined,
-        limit: query.limit ? Number(query.limit) : undefined,
+        ...parsePaginationQuery(query),
       }, db)
     )
   }, {

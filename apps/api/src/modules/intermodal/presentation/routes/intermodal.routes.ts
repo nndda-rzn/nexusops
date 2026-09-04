@@ -5,6 +5,7 @@ import { requestHandoverCommand } from '@/modules/intermodal/application/command
 import { respondHandoverCommand } from '@/modules/intermodal/application/commands/respond-handover.command'
 import { completeHandoverCommand, cancelHandoverCommand } from '@/modules/intermodal/application/commands/handover-lifecycle.commands'
 import { listHandoverRequestsQuery, getHandoverByIdQuery } from '@/modules/intermodal/application/queries/handover.queries'
+import { parsePaginationQuery } from '@/shared/pagination/query-helpers'
 
 export const intermodalRoutes = new Elysia({ prefix: '/intermodal' })
   .use(authMiddleware)
@@ -13,8 +14,7 @@ export const intermodalRoutes = new Elysia({ prefix: '/intermodal' })
     if (!user) throw new UnauthorizedError()
     const result = await withDbContext(user, (db) =>
       listHandoverRequestsQuery(user.orgId, db, {
-        ...(query.page ? { page: Number(query.page) } : {}),
-        ...(query.limit ? { limit: Number(query.limit) } : {}),
+        ...parsePaginationQuery(query),
       })
     )
     return result

@@ -1,3 +1,5 @@
+import { DomainError } from '@/shared/errors'
+
 // ─────────────────────────────────────────
 // Voyage Entity
 // ─────────────────────────────────────────
@@ -28,7 +30,8 @@ export class Voyage {
 
   start(): void {
     if (this.props.status !== 'PLANNED') {
-      throw new Error(`Voyage '${this.props.id}' is not in PLANNED status.`)
+      throw new DomainError('invalid-voyage-operation', 'Invalid Voyage Operation',
+        `Voyage '${this.props.id}' is not in PLANNED status.`, { voyage_id: this.props.id, status: this.props.status })
     }
     this.props.status = 'IN_PROGRESS'
     this.props.updatedAt = new Date()
@@ -36,7 +39,8 @@ export class Voyage {
 
   complete(): void {
     if (this.props.status !== 'IN_PROGRESS') {
-      throw new Error(`Voyage '${this.props.id}' is not IN_PROGRESS.`)
+      throw new DomainError('invalid-voyage-operation', 'Invalid Voyage Operation',
+        `Voyage '${this.props.id}' is not IN_PROGRESS.`, { voyage_id: this.props.id, status: this.props.status })
     }
     this.props.status = 'COMPLETED'
     this.props.updatedAt = new Date()
@@ -44,7 +48,8 @@ export class Voyage {
 
   cancel(): void {
     if (this.props.status === 'COMPLETED') {
-      throw new Error(`Cannot cancel a completed voyage.`)
+      throw new DomainError('invalid-voyage-operation', 'Invalid Voyage Operation',
+        `Cannot cancel a completed voyage.`, { voyage_id: this.props.id })
     }
     this.props.status = 'CANCELLED'
     this.props.updatedAt = new Date()

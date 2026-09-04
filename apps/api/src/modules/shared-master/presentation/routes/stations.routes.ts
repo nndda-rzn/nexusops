@@ -3,6 +3,7 @@ import { authMiddleware, withDbContext, requireHolding } from '@/shared/auth/mid
 import { UnauthorizedError } from '@/shared/errors'
 import { listStationsQuery, getStationQuery } from '@/modules/shared-master/application/queries/list-stations.query'
 import { createStationCommand } from '@/modules/shared-master/application/commands/create-station.command'
+import { parsePaginationQuery } from '@/shared/pagination/query-helpers'
 
 export const stationsRoutes = new Elysia({ prefix: '/shared-master' })
   .use(authMiddleware)
@@ -12,8 +13,7 @@ export const stationsRoutes = new Elysia({ prefix: '/shared-master' })
     if (!user) throw new UnauthorizedError()
     const result = await withDbContext(user, (db) =>
       listStationsQuery(db, {
-        ...(query.page ? { page: Number(query.page) } : {}),
-        ...(query.limit ? { limit: Number(query.limit) } : {}),
+        ...parsePaginationQuery(query),
         ...(query.type ? { type: query.type as 'PORT' | 'DRY_PORT' | 'INLAND' | 'JUNCTION' | 'YARD' } : {}),
       })
     )

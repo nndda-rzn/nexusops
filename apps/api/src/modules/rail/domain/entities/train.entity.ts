@@ -1,3 +1,5 @@
+import { InvalidTrainTransitionError } from '../errors/invalid-train-transition.error'
+
 // ─────────────────────────────────────────
 // Train Entity — State Machine
 // ─────────────────────────────────────────
@@ -59,7 +61,7 @@ export class Train {
   transition(to: TrainStatus): void {
     const allowed = VALID_TRANSITIONS[this.props.status] ?? []
     if (!allowed.includes(to)) {
-      throw new Error(`Cannot transition train from '${this.props.status}' to '${to}'.`)
+      throw new InvalidTrainTransitionError(this.props.status, to)
     }
     this.props.status = to
     this.props.updatedAt = new Date()

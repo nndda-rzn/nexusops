@@ -63,6 +63,12 @@ import type {
   MaintenanceFailureReportedEvent, MaintenancePartsRequestedEvent,
 } from '@/modules/maintenance/domain/events/maintenance.events'
 
+// Yard
+import type {
+  YardContainerPlacedEvent, YardContainerMovedEvent,
+  YardContainerRemovedEvent, YardSlotReservedEvent,
+} from '@/modules/yard/domain/events/yard.events'
+
 export interface HandoverRequestedEvent { type: 'intermodal.handover_requested'; handoverId: string; shipmentId: string; legId: string; fromEntityId: string; toEntityId: string; occurredAt: Date }
 export interface HandoverAcceptedEvent { type: 'intermodal.handover_accepted'; handoverId: string; shipmentId: string; legId?: string | undefined; fromEntityId: string; toEntityId: string; occurredAt: Date; respondedBy: string }
 export interface HandoverRejectedEvent { type: 'intermodal.handover_rejected'; handoverId: string; shipmentId: string; legId?: string | undefined; fromEntityId: string; toEntityId: string; occurredAt: Date; respondedBy: string; rejectionReason?: string | undefined }
@@ -178,4 +184,9 @@ export type EventMap = {
   'maintenance.workorder_closed': MaintenanceWorkOrderClosedEvent
   'maintenance.failure_reported': MaintenanceFailureReportedEvent
   'maintenance.parts_requested': MaintenancePartsRequestedEvent
+  // Yard
+  'yard.container_placed': YardContainerPlacedEvent
+  'yard.container_moved': YardContainerMovedEvent
+  'yard.container_removed': YardContainerRemovedEvent
+  'yard.slot_reserved': YardSlotReservedEvent
 }

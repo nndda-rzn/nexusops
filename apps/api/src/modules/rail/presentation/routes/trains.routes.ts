@@ -17,6 +17,7 @@ export const trainsRoutes = new Elysia({ prefix: '/rail' })
         ...(query.page ? { page: Number(query.page) } : {}),
         ...(query.limit ? { limit: Number(query.limit) } : {}),
         ...(query.service_id ? { serviceId: query.service_id } : {}),
+        ...(query.status ? { status: query.status } : {}),
       })
     )
     return result
@@ -25,6 +26,12 @@ export const trainsRoutes = new Elysia({ prefix: '/rail' })
       page:       t.Optional(t.String()),
       limit:      t.Optional(t.String()),
       service_id: t.Optional(t.String()),
+      status:     t.Optional(t.Union([
+        t.Literal('SCHEDULED'), t.Literal('TRAINSET_ASSIGNED'), t.Literal('CREW_ASSIGNED'),
+        t.Literal('LOADING'), t.Literal('READY_TO_DEPART'), t.Literal('EN_ROUTE'),
+        t.Literal('ARRIVED'), t.Literal('UNLOADING'), t.Literal('COMPLETED'),
+        t.Literal('DELAYED'), t.Literal('CANCELLED'),
+      ])),
     }),
     detail: { tags: ['Rail'], summary: 'List trains' },
   })

@@ -16,18 +16,25 @@ export const vehiclesRoutes = new Elysia({ prefix: '/road' })
       listVehiclesQuery(user.orgId, db, {
         ...(query.page ? { page: Number(query.page) } : {}),
         ...(query.limit ? { limit: Number(query.limit) } : {}),
+        ...(query.status ? { status: query.status } : {}),
       })
     )
     return result
   }, {
-    query: t.Object({ page: t.Optional(t.String()), limit: t.Optional(t.String()) }),
+    query: t.Object({
+      page:   t.Optional(t.String()),
+      limit:  t.Optional(t.String()),
+      status: t.Optional(t.Union([
+        t.Literal('AVAILABLE'), t.Literal('ON_TRIP'),
+        t.Literal('MAINTENANCE'), t.Literal('OFFLINE'),
+      ])),
+    }),
     detail: { tags: ['Road'], summary: 'List vehicles' },
   })
 
   .get('/vehicles/:id', async ({ user, params }) => {
     if (!user) throw new UnauthorizedError()
     const result = await withDbContext(user, (db) => getVehicleQuery(params.id, user.orgId, db))
-    if (!result) return new Response(JSON.stringify({ error: 'Vehicle not found' }), { status: 404 })
     return { data: result }
   }, { detail: { tags: ['Road'], summary: 'Get vehicle by ID' } })
 

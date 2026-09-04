@@ -17,11 +17,21 @@ export const tripsRoutes = new Elysia({ prefix: '/road' })
       listTripsQuery(user.orgId, db, {
         ...(query.page ? { page: Number(query.page) } : {}),
         ...(query.limit ? { limit: Number(query.limit) } : {}),
+        ...(query.status ? { status: query.status } : {}),
       })
     )
     return result
   }, {
-    query: t.Object({ page: t.Optional(t.String()), limit: t.Optional(t.String()) }),
+    query: t.Object({
+      page:   t.Optional(t.String()),
+      limit:  t.Optional(t.String()),
+      status: t.Optional(t.Union([
+        t.Literal('PLANNED'), t.Literal('ASSIGNED'), t.Literal('DISPATCHED'),
+        t.Literal('EN_ROUTE'), t.Literal('AT_CHECKPOINT'), t.Literal('ARRIVED_DESTINATION'),
+        t.Literal('DELIVERING'), t.Literal('COMPLETED'), t.Literal('DELAYED'),
+        t.Literal('BREAKDOWN'), t.Literal('CANCELLED'),
+      ])),
+    }),
     detail: { tags: ['Road'], summary: 'List trips' },
   })
 

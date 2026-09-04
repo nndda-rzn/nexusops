@@ -32,7 +32,6 @@ export const trainsRoutes = new Elysia({ prefix: '/rail' })
   .get('/trains/:id', async ({ user, params }) => {
     if (!user) throw new UnauthorizedError()
     const result = await withDbContext(user, (db) => getTrainQuery(params.id, user.orgId, db))
-    if (!result) return new Response(JSON.stringify({ error: 'Train not found' }), { status: 404 })
     return { data: result }
   }, { detail: { tags: ['Rail'], summary: 'Get train by ID' } })
 

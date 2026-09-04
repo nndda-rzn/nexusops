@@ -1,6 +1,7 @@
 import { vehicles, drivers, trips } from '@/shared/database/schema/road'
 import { eq, and, sql } from 'drizzle-orm'
 import { normalizePagination, toOffset, paginate } from '@/shared/pagination'
+import { TripNotFoundError } from '@/modules/road/domain/errors/road.errors'
 import type { DbContext } from '@/shared/database/client'
 
 export async function listVehiclesQuery(
@@ -67,5 +68,6 @@ export async function listTripsQuery(
 export async function getTripQuery(id: string, orgId: string, db: DbContext) {
   const [row] = await db.select().from(trips)
     .where(and(eq(trips.id, id), eq(trips.orgId, orgId))).limit(1)
-  return row ?? null
+  if (!row) throw new TripNotFoundError(id)
+  return row
 }

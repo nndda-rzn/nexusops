@@ -28,7 +28,6 @@ export const tripsRoutes = new Elysia({ prefix: '/road' })
   .get('/trips/:id', async ({ user, params }) => {
     if (!user) throw new UnauthorizedError()
     const result = await withDbContext(user, (db) => getTripQuery(params.id, user.orgId, db))
-    if (!result) return new Response(JSON.stringify({ error: 'Trip not found' }), { status: 404 })
     return { data: result }
   }, { detail: { tags: ['Road'], summary: 'Get trip by ID' } })
 

@@ -44,6 +44,8 @@ import { maintenanceResourcesRoutes } from '@/modules/maintenance/presentation/r
 import { yardRoutes } from '@/modules/yard/presentation/routes/yard.routes'
 import { warehouseRoutes } from '@/modules/warehouse/presentation/routes/warehouse.routes'
 import { warehouseOperationsRoutes } from '@/modules/warehouse/presentation/routes/warehouse-operations.routes'
+import { aviationRoutes } from '@/modules/aviation/presentation/routes/aviation.routes'
+import { aviationOperationsRoutes } from '@/modules/aviation/presentation/routes/aviation-operations.routes'
 
 export function createApp() {
   return new Elysia()
@@ -68,6 +70,7 @@ export function createApp() {
           { name: 'Assets' }, { name: 'Maintenance' }, { name: 'Workforce' },
           { name: 'Planning' }, { name: 'Billing' }, { name: 'Analytics' },
           { name: 'Intermodal' }, { name: 'Group' }, { name: 'Shared Master' },
+          { name: 'Aviation' },
         ],
       },
       path: '/swagger',
@@ -93,42 +96,21 @@ export function createApp() {
     })
 
     .use(healthRoutes)
-    .use(loginRoutes)
-    .use(tokenRoutes)
-    .use(entityRoutes)
-    .use(operationCommandRoutes)
-    .use(listOperationsRoutes)
-    .use(operationDependencyRoutes)
-    .use(interventionRoutes)
-    .use(containerRoutes)
-    .use(containerHoldRoutes)
-    .use(containerQueryRoutes)
-    .use(berthRoutes)
-    .use(craneRoutes)
-    .use(terminalManagementRoutes)
-    .use(shipmentRoutes)
-    .use(shipmentSubRoutes)
-    .use(intermodalRoutes)
-    .use(portsRoutes)
-    .use(stationsRoutes)
-    .use(airportsRoutes)
-    .use(vesselsRoutes)
-    .use(voyagesRoutes)
-    .use(portCallsRoutes)
-    .use(portCallLifecycleRoutes)
-    .use(railResourcesRoutes)
-    .use(trainsRoutes)
-    .use(trainLifecycleRoutes)
-    .use(vehiclesRoutes)
-    .use(tripsRoutes)
-    .use(employeesRoutes)
-    .use(employeeProfileRoutes)
-    .use(workforceResourcesRoutes)
-    .use(assetsRoutes)
-    .use(assetOperationsRoutes)
-    .use(workOrdersRoutes)
-    .use(maintenanceResourcesRoutes)
+    .use(loginRoutes).use(tokenRoutes).use(entityRoutes)
+    .use(operationCommandRoutes).use(listOperationsRoutes)
+    .use(operationDependencyRoutes).use(interventionRoutes)
+    .use(containerRoutes).use(containerHoldRoutes).use(containerQueryRoutes)
+    .use(berthRoutes).use(craneRoutes).use(terminalManagementRoutes)
+    .use(shipmentRoutes).use(shipmentSubRoutes).use(intermodalRoutes)
+    .use(portsRoutes).use(stationsRoutes).use(airportsRoutes)
+    .use(vesselsRoutes).use(voyagesRoutes)
+    .use(portCallsRoutes).use(portCallLifecycleRoutes)
+    .use(railResourcesRoutes).use(trainsRoutes).use(trainLifecycleRoutes)
+    .use(vehiclesRoutes).use(tripsRoutes)
+    .use(employeesRoutes).use(employeeProfileRoutes).use(workforceResourcesRoutes)
+    .use(assetsRoutes).use(assetOperationsRoutes)
+    .use(workOrdersRoutes).use(maintenanceResourcesRoutes)
     .use(yardRoutes)
-    .use(warehouseRoutes)
-    .use(warehouseOperationsRoutes)
+    .use(warehouseRoutes).use(warehouseOperationsRoutes)
+    .use(aviationRoutes).use(aviationOperationsRoutes)
 }

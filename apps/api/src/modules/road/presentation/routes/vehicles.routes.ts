@@ -97,7 +97,9 @@ export const vehiclesRoutes = new Elysia({ prefix: '/road' })
     if (!user) throw new UnauthorizedError()
     await withDbContext(user, (db) =>
       updateVehiclePositionCommand({
-        vehicleId: body.vehicle_id, position: body.position,
+        vehicleId: body.vehicle_id,
+        orgId: user.orgId,
+        position: body.position,
         ...(body.speed ? { speed: body.speed } : {}),
         ...(body.heading ? { heading: body.heading } : {}),
         ...(body.recorded_at ? { recordedAt: new Date(body.recorded_at) } : {}),

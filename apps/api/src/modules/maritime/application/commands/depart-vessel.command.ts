@@ -1,6 +1,7 @@
 import { findPortCallByIdOrFail, savePortCall } from '@/modules/maritime/infrastructure/repositories/port-call.repository'
 import { voyages } from '@/shared/database/schema/maritime'
 import { eq } from 'drizzle-orm'
+import { DomainError } from '@/shared/errors'
 import { eventBus } from '@/shared/events'
 import type { DbContext } from '@/shared/database/client'
 
@@ -27,9 +28,17 @@ export async function departVesselCommand(cmd: DepartVesselCommand, db: DbContex
     .where(eq(voyages.id, portCall.voyageId))
     .limit(1)
 
+  // P-04 FIX: throw if voyage not found instead of emitting empty vesselId
+  if (!voyage) throw new DomainError(
+    'voyage-not-found-for-port-call',
+    'Voyage Not Found',
+    `Cannot find voyage for port call '${cmd.portCallId}'.`,
+    { port_call_id: cmd.portCallId }
+  )
+
   await eventBus.emit('vessel.departed', {
     type: 'vessel.departed',
-    vesselId: voyage?.vesselId ?? '',
+    vesselId: voyage.vesselId,
     orgId: cmd.orgId,
     portCallId: cmd.portCallId, atd: cmd.atd,
     occurredAt: new Date(),

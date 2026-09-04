@@ -10,18 +10,14 @@ export const listOperationsRoutes = new Elysia({ prefix: '/operations' })
 
   .get('/', async ({ user, query }) => {
     if (!user) throw new UnauthorizedError()
-
     const statusRaw = query.status
     const typeRaw = query.type
-
     const status = statusRaw
       ? (Array.isArray(statusRaw) ? statusRaw : [statusRaw]) as OperationStatus[]
       : undefined
-
     const type = typeRaw
       ? (Array.isArray(typeRaw) ? typeRaw : [typeRaw]) as OperationType[]
       : undefined
-
     return withDbContext(user, (db) =>
       listOperationsQuery({
         orgId: user.orgId,
@@ -43,9 +39,8 @@ export const listOperationsRoutes = new Elysia({ prefix: '/operations' })
 
   .get('/:id', async ({ user, params }) => {
     if (!user) throw new UnauthorizedError()
-
     return withDbContext(user, (db) =>
-      getOperationQuery({ operationId: params.id }, db)
+      getOperationQuery({ operationId: params.id, orgId: user.orgId }, db)
     )
   }, {
     detail: { tags: ['Operations'], summary: 'Get operation by ID' },

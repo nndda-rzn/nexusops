@@ -5,6 +5,7 @@ import { env } from '@/shared/config/env'
 import { logger } from '@/shared/logging'
 import { AppError } from '@/shared/errors'
 import { ulid } from 'ulid'
+import { authRoutes } from '@/modules/identity/presentation/routes/auth.routes'
 
 export function createApp() {
   const app = new Elysia()
@@ -160,6 +161,11 @@ export function createApp() {
         summary: 'Readiness check',
       },
     })
+
+    // ─────────────────────────────────────────
+    // Routes
+    // ─────────────────────────────────────────
+    .use(authRoutes)
 
   return app
 }

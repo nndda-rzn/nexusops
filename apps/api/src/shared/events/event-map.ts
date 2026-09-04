@@ -49,6 +49,13 @@ import type {
   CertificationExpiringEvent,
 } from '@/modules/workforce/domain/events/workforce.events'
 
+// Assets
+import type {
+  AssetRegisteredEvent, AssetStatusChangedEvent,
+  AssetOperatorAssignedEvent, AssetOperatorReturnedEvent,
+  AssetInspectionCompletedEvent, AssetMaintenanceRequiredEvent,
+} from '@/modules/assets/domain/events/assets.events'
+
 export interface HandoverRequestedEvent { type: 'intermodal.handover_requested'; handoverId: string; shipmentId: string; legId: string; fromEntityId: string; toEntityId: string; occurredAt: Date }
 export interface HandoverAcceptedEvent { type: 'intermodal.handover_accepted'; handoverId: string; shipmentId: string; legId?: string | undefined; fromEntityId: string; toEntityId: string; occurredAt: Date; respondedBy: string }
 export interface HandoverRejectedEvent { type: 'intermodal.handover_rejected'; handoverId: string; shipmentId: string; legId?: string | undefined; fromEntityId: string; toEntityId: string; occurredAt: Date; respondedBy: string; rejectionReason?: string | undefined }
@@ -150,4 +157,11 @@ export type EventMap = {
   'workforce.assigned': WorkforceAssignedEvent
   'workforce.assignment_completed': WorkforceAssignmentCompletedEvent
   'workforce.certification_expiring': CertificationExpiringEvent
+  // Assets
+  'asset.registered': AssetRegisteredEvent
+  'asset.status_changed': AssetStatusChangedEvent
+  'asset.operator_assigned': AssetOperatorAssignedEvent
+  'asset.operator_returned': AssetOperatorReturnedEvent
+  'asset.inspection_completed': AssetInspectionCompletedEvent
+  'asset.maintenance_required': AssetMaintenanceRequiredEvent
 }

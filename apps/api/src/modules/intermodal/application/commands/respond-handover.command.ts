@@ -1,5 +1,5 @@
-import { handoverRequests } from '@/shared/database/schema/intermodal'
-import { eq, and } from 'drizzle-orm'
+import { findHandoverByIdForRespond } from '@/modules/intermodal/infrastructure/repositories/handover.repository'
+import { updateHandoverStatus } from '@/modules/intermodal/infrastructure/repositories/handover.repository'
 import { HandoverNotFoundError, HandoverAlreadyRespondedError } from '@/modules/intermodal/domain/errors/handover.errors'
 import { ForbiddenError } from '@/shared/errors'
 import { eventBus } from '@/shared/events'
@@ -18,14 +18,7 @@ export async function respondHandoverCommand(
   db: DbContext
 ): Promise<void> {
   // S-03 FIX: query with toEntityId ownership check
-  const [handover] = await db
-    .select()
-    .from(handoverRequests)
-    .where(and(
-      eq(handoverRequests.id, cmd.handoverId),
-      eq(handoverRequests.toEntityId, cmd.respondingEntityId),  // ← ownership check
-    ))
-    .limit(1)
+  const handover = await findHandoverByIdForRespond(cmd.handoverId, cmd.respondingEntityId, db)
 
   if (!handover) throw new HandoverNotFoundError(cmd.handoverId)
 
@@ -44,13 +37,11 @@ export async function respondHandoverCommand(
   const newStatus = cmd.response === 'ACCEPT' ? 'ACCEPTED' : 'REJECTED'
   const now = new Date()
 
-  await db.update(handoverRequests)
-    .set({
-      status: newStatus,
-      ...(cmd.response === 'ACCEPT' ? { acceptedAt: now } : { rejectedAt: now }),
-      ...(cmd.rejectionReason ? { rejectionReason: cmd.rejectionReason } : {}),
-    })
-    .where(eq(handoverRequests.id, cmd.handoverId))
+  await updateHandoverStatus(cmd.handoverId, {
+    status: newStatus,
+    ...(cmd.response === 'ACCEPT' ? { acceptedAt: now } : { rejectedAt: now }),
+    ...(cmd.rejectionReason ? { rejectionReason: cmd.rejectionReason } : {}),
+  }, db)
 
   const eventType = cmd.response === 'ACCEPT'
     ? 'intermodal.handover_accepted'

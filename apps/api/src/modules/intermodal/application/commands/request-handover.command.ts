@@ -1,4 +1,4 @@
-import { handoverRequests } from '@/shared/database/schema/intermodal'
+import { insertHandover } from '@/modules/intermodal/infrastructure/repositories/handover.repository'
 import { generateId } from '@/shared/ids'
 import { eventBus } from '@/shared/events'
 import type { DbContext } from '@/shared/database/client'
@@ -25,7 +25,7 @@ export async function requestHandoverCommand(
 ): Promise<RequestHandoverResult> {
   const id = generateId()
 
-  await db.insert(handoverRequests).values({
+  await insertHandover({
     id,
     shipmentId: cmd.shipmentId,
     legId: cmd.legId,
@@ -38,7 +38,7 @@ export async function requestHandoverCommand(
     status: 'PENDING',
     requestedAt: new Date(),
     createdAt: new Date(),
-  })
+  }, db)
 
   await eventBus.emit('intermodal.handover_requested', {
     type: 'intermodal.handover_requested',

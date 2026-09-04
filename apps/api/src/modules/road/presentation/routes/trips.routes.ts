@@ -6,6 +6,7 @@ import { getTripCheckpointsQuery } from '@/modules/road/application/queries/road
 import { createTripCommand } from '@/modules/road/application/commands/create-trip.command'
 import { assignTripCommand, dispatchTripCommand, departTripCommand, arriveTripCommand, completeTripCommand } from '@/modules/road/application/commands/trip-lifecycle.command'
 import { delayTripCommand, recordCheckpointCommand } from '@/modules/road/application/commands/trip-events.command'
+import { resumeTripCommand } from '@/modules/road/application/commands/resume-trip.command'
 
 export const tripsRoutes = new Elysia({ prefix: '/road' })
   .use(authMiddleware)
@@ -123,6 +124,15 @@ export const tripsRoutes = new Elysia({ prefix: '/road' })
     )
     return { data: { message: 'Trip completed.' } }
   }, { detail: { tags: ['Road'], summary: 'Complete trip' } })
+
+  // F-05 FIX: AT_CHECKPOINT → EN_ROUTE — allows multiple checkpoints per trip
+  .post('/trips/:id/resume', async ({ user, params }) => {
+    if (!user) throw new UnauthorizedError()
+    await withDbContext(user, (db) =>
+      resumeTripCommand({ tripId: params.id, orgId: user.orgId }, db)
+    )
+    return { data: { message: 'Trip resumed en route.' } }
+  }, { detail: { tags: ['Road'], summary: 'Resume trip after checkpoint' } })
 
   .post('/trips/:id/delay', async ({ user, params, body }) => {
     if (!user) throw new UnauthorizedError()

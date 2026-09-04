@@ -32,6 +32,8 @@ import { portCallLifecycleRoutes } from '@/modules/maritime/presentation/routes/
 import { railResourcesRoutes } from '@/modules/rail/presentation/routes/rail-resources.routes'
 import { trainsRoutes } from '@/modules/rail/presentation/routes/trains.routes'
 import { trainLifecycleRoutes } from '@/modules/rail/presentation/routes/train-lifecycle.routes'
+import { vehiclesRoutes } from '@/modules/road/presentation/routes/vehicles.routes'
+import { tripsRoutes } from '@/modules/road/presentation/routes/trips.routes'
 
 export function createApp() {
   return new Elysia()
@@ -107,4 +109,6 @@ export function createApp() {
     .use(railResourcesRoutes)
     .use(trainsRoutes)
     .use(trainLifecycleRoutes)
+    .use(vehiclesRoutes)
+    .use(tripsRoutes)
 }

@@ -65,10 +65,14 @@ export async function savePortCall(portCall: PortCall, db: DbContext): Promise<v
     .set({
       status: snap.status,
       eta: snap.eta,
+      etb: snap.etb,
+      etd: snap.etd,
       ata: snap.ata,
       atb: snap.atb,
       atd: snap.atd,
+      agentId: snap.agentId,
       delayReason: snap.delayReason,
+      notes: snap.notes,
       updatedAt: snap.updatedAt,
     })
     .where(and(eq(portCalls.id, snap.id), eq(portCalls.orgId, snap.orgId)))

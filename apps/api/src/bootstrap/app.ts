@@ -15,9 +15,12 @@ import { operationDependencyRoutes } from '@/modules/operations/presentation/rou
 import { interventionRoutes } from '@/modules/operations/presentation/routes/intervention.routes'
 import { containerRoutes } from '@/modules/containers/presentation/routes/containers.routes'
 import { containerHoldRoutes } from '@/modules/containers/presentation/routes/container-holds.routes'
+import { containerQueryRoutes } from '@/modules/containers/presentation/routes/container-queries.routes'
 import { berthRoutes } from '@/modules/terminal/presentation/routes/berth.routes'
 import { craneRoutes } from '@/modules/terminal/presentation/routes/crane.routes'
+import { terminalManagementRoutes } from '@/modules/terminal/presentation/routes/terminal-management.routes'
 import { shipmentRoutes } from '@/modules/shipments/presentation/routes/shipments.routes'
+import { shipmentSubRoutes } from '@/modules/shipments/presentation/routes/shipment-sub.routes'
 import { intermodalRoutes } from '@/modules/intermodal/presentation/routes/intermodal.routes'
 
 export function createApp() {
@@ -95,8 +98,11 @@ export function createApp() {
     .use(interventionRoutes)
     .use(containerRoutes)
     .use(containerHoldRoutes)
+    .use(containerQueryRoutes)
     .use(berthRoutes)
     .use(craneRoutes)
+    .use(terminalManagementRoutes)
     .use(shipmentRoutes)
+    .use(shipmentSubRoutes)
     .use(intermodalRoutes)
 }

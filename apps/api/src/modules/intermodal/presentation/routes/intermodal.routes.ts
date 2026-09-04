@@ -3,32 +3,33 @@ import { authMiddleware, withDbContext } from '@/shared/auth/middleware'
 import { UnauthorizedError } from '@/shared/errors'
 import { requestHandoverCommand } from '@/modules/intermodal/application/commands/request-handover.command'
 import { respondHandoverCommand } from '@/modules/intermodal/application/commands/respond-handover.command'
-import { listHandoverRequestsQuery } from '@/modules/intermodal/application/queries/handover.queries'
+import { completeHandoverCommand, cancelHandoverCommand } from '@/modules/intermodal/application/commands/handover-lifecycle.commands'
+import { listHandoverRequestsQuery, getHandoverByIdQuery } from '@/modules/intermodal/application/queries/handover.queries'
 
 export const intermodalRoutes = new Elysia({ prefix: '/intermodal' })
   .use(authMiddleware)
 
-  // GET /intermodal/handovers — list handovers for current entity
   .get('/handovers', async ({ user }) => {
     if (!user) throw new UnauthorizedError()
+    const result = await withDbContext(user, (db) => listHandoverRequestsQuery(user.orgId, db))
+    return { data: result }
+  }, { detail: { tags: ['Intermodal'], summary: 'List handover requests' } })
+
+  .get('/handovers/:id', async ({ user, params }) => {
+    if (!user) throw new UnauthorizedError()
     const result = await withDbContext(user, (db) =>
-      listHandoverRequestsQuery(user.orgId, db)
+      getHandoverByIdQuery(params.id, user.orgId, db)
     )
     return { data: result }
-  }, {
-    detail: { tags: ['Intermodal'], summary: 'List handover requests' },
-  })
+  }, { detail: { tags: ['Intermodal'], summary: 'Get handover by ID' } })
 
-  // POST /intermodal/handovers — request handover
   .post('/handovers', async ({ user, body }) => {
     if (!user) throw new UnauthorizedError()
     const result = await withDbContext(user, (db) =>
       requestHandoverCommand({
-        shipmentId: body.shipment_id,
-        legId: body.leg_id,
+        shipmentId: body.shipment_id, legId: body.leg_id,
+        fromEntityId: user.orgId, toEntityId: body.to_entity_id,
         ...(body.next_leg_id ? { nextLegId: body.next_leg_id } : {}),
-        fromEntityId: user.orgId,
-        toEntityId: body.to_entity_id,
         cargoDetails: body.cargo_details,
         ...(body.handover_location ? { handoverLocation: body.handover_location } : {}),
         ...(body.handover_location_type ? { handoverLocationType: body.handover_location_type } : {}),
@@ -37,18 +38,17 @@ export const intermodalRoutes = new Elysia({ prefix: '/intermodal' })
     return { data: result }
   }, {
     body: t.Object({
-      shipment_id:          t.String(),
-      leg_id:               t.String(),
-      to_entity_id:         t.String(),
-      next_leg_id:          t.Optional(t.String()),
-      cargo_details:        t.Optional(t.Record(t.String(), t.Unknown())),
-      handover_location:    t.Optional(t.String()),
-      handover_location_type: t.Optional(t.String()),
+      shipment_id:             t.String(),
+      leg_id:                  t.String(),
+      to_entity_id:            t.String(),
+      next_leg_id:             t.Optional(t.String()),
+      cargo_details:           t.Optional(t.Record(t.String(), t.Unknown())),
+      handover_location:       t.Optional(t.String()),
+      handover_location_type:  t.Optional(t.String()),
     }),
     detail: { tags: ['Intermodal'], summary: 'Request handover to another entity' },
   })
 
-  // POST /intermodal/handovers/:id/respond — accept or reject
   .post('/handovers/:id/respond', async ({ user, params, body }) => {
     if (!user) throw new UnauthorizedError()
     await withDbContext(user, (db) =>
@@ -57,7 +57,7 @@ export const intermodalRoutes = new Elysia({ prefix: '/intermodal' })
         response: body.response as 'ACCEPT' | 'REJECT',
         ...(body.rejection_reason ? { rejectionReason: body.rejection_reason } : {}),
         respondedBy: user.id,
-        respondingEntityId: user.orgId,   // S-03 FIX: pass ownership
+        respondingEntityId: user.orgId,
       }, db)
     )
     return { data: { message: `Handover ${body.response.toLowerCase()}ed.` } }
@@ -67,4 +67,26 @@ export const intermodalRoutes = new Elysia({ prefix: '/intermodal' })
       rejection_reason: t.Optional(t.String()),
     }),
     detail: { tags: ['Intermodal'], summary: 'Respond to handover request' },
+  })
+
+  .post('/handovers/:id/complete', async ({ user, params }) => {
+    if (!user) throw new UnauthorizedError()
+    await withDbContext(user, (db) =>
+      completeHandoverCommand({ handoverId: params.id, completedBy: user.id, entityId: user.orgId }, db)
+    )
+    return { data: { message: 'Handover completed.' } }
+  }, { detail: { tags: ['Intermodal'], summary: 'Complete handover' } })
+
+  .post('/handovers/:id/cancel', async ({ user, params, body }) => {
+    if (!user) throw new UnauthorizedError()
+    await withDbContext(user, (db) =>
+      cancelHandoverCommand({
+        handoverId: params.id, cancelledBy: user.id, entityId: user.orgId,
+        ...(body.reason ? { reason: body.reason } : {}),
+      }, db)
+    )
+    return { data: { message: 'Handover cancelled.' } }
+  }, {
+    body: t.Object({ reason: t.Optional(t.String()) }),
+    detail: { tags: ['Intermodal'], summary: 'Cancel handover' },
   })

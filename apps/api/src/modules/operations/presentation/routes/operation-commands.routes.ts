@@ -6,6 +6,9 @@ import { completeOperationCommand } from '@/modules/operations/application/comma
 import { cancelOperationCommand } from '@/modules/operations/application/commands/cancel-operation.command'
 import { delayOperationCommand } from '@/modules/operations/application/commands/delay-operation.command'
 import { createOperationCommand } from '@/modules/operations/application/commands/create-operation.command'
+import { holdOperationCommand } from '@/modules/operations/application/commands/hold-operation.command'
+import { resumeOperationCommand } from '@/modules/operations/application/commands/resume-operation.command'
+import { reprioritizeOperationCommand } from '@/modules/operations/application/commands/reprioritize-operation.command'
 import type { OperationType, OperationPriority } from '@/modules/operations/domain/entities/operation.entity'
 
 export const operationCommandRoutes = new Elysia({ prefix: '/operations' })
@@ -88,4 +91,36 @@ export const operationCommandRoutes = new Elysia({ prefix: '/operations' })
   }, {
     body: t.Object({ delay_minutes: t.Number({ minimum: 1 }) }),
     detail: { tags: ['Operations'], summary: 'Delay operation' },
+  })
+
+  .post('/:id/hold', async ({ user, params }) => {
+    if (!user) throw new UnauthorizedError()
+    await withDbContext(user, (db) =>
+      holdOperationCommand({ operationId: params.id, orgId: user.orgId, actorId: user.id }, db)
+    )
+    return { data: { message: 'Operation put on hold.' } }
+  }, { detail: { tags: ['Operations'], summary: 'Put operation on hold' } })
+
+  .post('/:id/resume', async ({ user, params }) => {
+    if (!user) throw new UnauthorizedError()
+    await withDbContext(user, (db) =>
+      resumeOperationCommand({ operationId: params.id, orgId: user.orgId, actorId: user.id }, db)
+    )
+    return { data: { message: 'Operation resumed.' } }
+  }, { detail: { tags: ['Operations'], summary: 'Resume operation from hold' } })
+
+  .post('/:id/reprioritize', async ({ user, params, body }) => {
+    if (!user) throw new UnauthorizedError()
+    await withDbContext(user, (db) =>
+      reprioritizeOperationCommand({
+        operationId: params.id, orgId: user.orgId,
+        priority: body.priority as OperationPriority, actorId: user.id,
+      }, db)
+    )
+    return { data: { message: 'Operation reprioritized.' } }
+  }, {
+    body: t.Object({
+      priority: t.Union([t.Literal('LOW'), t.Literal('NORMAL'), t.Literal('HIGH'), t.Literal('CRITICAL')]),
+    }),
+    detail: { tags: ['Operations'], summary: 'Reprioritize operation' },
   })

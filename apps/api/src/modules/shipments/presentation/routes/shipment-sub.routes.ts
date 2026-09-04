@@ -63,7 +63,13 @@ export const shipmentSubRoutes = new Elysia({ prefix: '/shipments' })
     return { data: { message: 'Leg updated.' } }
   }, {
     body: t.Object({
-      status:           t.String(),
+      status: t.Union([
+        t.Literal('PLANNED'),
+        t.Literal('IN_PROGRESS'),
+        t.Literal('COMPLETED'),
+        t.Literal('CANCELLED'),
+        t.Literal('DELAYED'),
+      ]),
       actual_departure: t.Optional(t.String()),
       actual_arrival:   t.Optional(t.String()),
       delay_minutes:    t.Optional(t.Number()),

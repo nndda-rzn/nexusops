@@ -141,6 +141,13 @@
       "when": 1788572249173,
       "tag": "0019_phase3_maintenance",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1788573150141,
+      "tag": "0020_phase3_yard",
+      "breakpoints": true
     }
   ]
 }

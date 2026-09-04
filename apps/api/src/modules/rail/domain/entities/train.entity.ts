@@ -41,6 +41,7 @@ export interface TrainProps {
   actualArrival?: Date | undefined
   status: TrainStatus
   delayMinutes: number
+  delayReason?: string | undefined        // Q-08 FIX: separate from cancellationReason
   cancellationReason?: string | undefined
   createdAt: Date
   updatedAt: Date
@@ -81,7 +82,7 @@ export class Train {
 
   delay(minutes: number, reason?: string): void {
     this.props.delayMinutes += minutes
-    if (reason) this.props.cancellationReason = reason
+    if (reason) this.props.delayReason = reason  // Q-08 FIX: use delayReason, not cancellationReason
     this.props.updatedAt = new Date()
   }
 

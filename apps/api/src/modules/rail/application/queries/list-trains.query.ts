@@ -13,6 +13,9 @@ export async function listTrainsQuery(
 
   const conditions = [eq(trains.orgId, orgId)]
   if (params?.serviceId) conditions.push(eq(trains.serviceId, params.serviceId))
+  if (params?.status) conditions.push(
+    eq(trains.status, params.status as 'SCHEDULED' | 'TRAINSET_ASSIGNED' | 'CREW_ASSIGNED' | 'LOADING' | 'READY_TO_DEPART' | 'EN_ROUTE' | 'ARRIVED' | 'UNLOADING' | 'COMPLETED' | 'DELAYED' | 'CANCELLED')
+  )
 
   const whereClause = and(...conditions)
 

@@ -21,7 +21,7 @@ export async function createTripCommand(
   cmd: CreateTripCommand, db: DbContext
 ): Promise<{ id: string; referenceNumber: string }> {
   const id = generateId()
-  const referenceNumber = `TRIP-${Date.now()}`
+  const referenceNumber = `TRIP-${generateId()}`  // Q-04 FIX: ULID-based, collision-safe
   const now = new Date()
 
   const trip = Trip.fromSnapshot({

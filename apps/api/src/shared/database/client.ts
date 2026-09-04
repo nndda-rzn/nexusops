@@ -1,6 +1,6 @@
 import postgres from 'postgres'
 import { drizzle } from 'drizzle-orm/postgres-js'
-import { type PostgresJsDatabase, type PostgresJsTransaction } from 'drizzle-orm/postgres-js'
+import type { PostgresJsDatabase, PostgresJsTransaction } from 'drizzle-orm/postgres-js'
 import { sql } from 'drizzle-orm'
 import { env } from '@/shared/config/env'
 import { logger } from '@/shared/logging'

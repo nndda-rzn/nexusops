@@ -3,10 +3,11 @@ import { authMiddleware, withDbContext } from '@/shared/auth/middleware'
 import { UnauthorizedError } from '@/shared/errors'
 import {
   addShipmentLegCommand, updateLegStatusCommand,
-  addMilestoneCommand,
-  raiseExceptionCommand, resolveExceptionCommand,
-  listExceptionsQuery, listLegsQuery,
+  addMilestoneCommand, listLegsQuery,
 } from '@/modules/shipments/application/commands/shipment-sub-resources.commands'
+import {
+  raiseExceptionCommand, resolveExceptionCommand, listExceptionsQuery,
+} from '@/modules/shipments/application/commands/shipment-exceptions.commands'
 
 export const shipmentSubRoutes = new Elysia({ prefix: '/shipments' })
   .use(authMiddleware)

@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+.bun/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+.svelte-kit/
+build/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+*.pyd
+.Python
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Logs
+*.log
+logs/
+
+# Drizzle
+drizzle/meta/
+
+# Bun lockfile (commit this)
+# bun.lockb
+
+# Temp
+tmp/
+.temp/

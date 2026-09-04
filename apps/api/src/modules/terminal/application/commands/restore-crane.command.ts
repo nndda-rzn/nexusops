@@ -14,22 +14,27 @@ export async function restoreCraneCommand(
   cmd: RestoreCraneCommand,
   db: DbContext
 ): Promise<void> {
-  const [crane] = await db.select().from(cranes)
-    .where(and(eq(cranes.id, cmd.craneId), eq(cranes.orgId, cmd.orgId)))
-    .limit(1)
+  const event = await db.transaction(async (tx) => {
+    const [crane] = await tx.select().from(cranes)
+      .where(and(eq(cranes.id, cmd.craneId), eq(cranes.orgId, cmd.orgId)))
+      .limit(1)
 
-  if (!crane) throw new CraneNotFoundError(cmd.craneId)
+    if (!crane) throw new CraneNotFoundError(cmd.craneId)
 
-  await db.update(cranes)
-    .set({ status: 'AVAILABLE', currentBerthId: null, updatedAt: new Date() })
-    .where(eq(cranes.id, cmd.craneId))
+    const now = new Date()
+    await tx.update(cranes)
+      .set({ status: 'AVAILABLE', currentBerthId: null, updatedAt: now })
+      .where(and(eq(cranes.id, cmd.craneId), eq(cranes.orgId, cmd.orgId)))
 
-  await eventBus.emit('crane.restored', {
+    return {
     type: 'crane.restored',
     orgId: cmd.orgId,
     craneId: cmd.craneId,
     craneCode: crane.code,
-    occurredAt: new Date(),
+    occurredAt: now,
     restoredBy: cmd.restoredBy,
+    }
   })
+
+  await eventBus.emit('crane.restored', event)
 }

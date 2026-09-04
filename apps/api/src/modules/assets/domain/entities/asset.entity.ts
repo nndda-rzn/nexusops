@@ -1,0 +1,59 @@
+// ─────────────────────────────────────────
+// Asset Entity
+// ─────────────────────────────────────────
+
+export type AssetStatus = 'ACTIVE' | 'IDLE' | 'ASSIGNED_OUT' | 'MAINTENANCE' | 'BREAKDOWN' | 'INSPECTION' | 'DECOMMISSIONED' | 'DISPOSED'
+export type AssetCondition = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR' | 'CRITICAL'
+
+export interface AssetProps {
+  id: string
+  orgId: string
+  assetNumber: string
+  categoryId?: string | undefined
+  name: string
+  serialNumber?: string | undefined
+  manufacturer?: string | undefined
+  model?: string | undefined
+  yearManufactured?: number | undefined
+  yearAcquired?: number | undefined
+  acquisitionCost?: string | undefined
+  currentValue?: string | undefined
+  ownerOrgId: string
+  operatorOrgId?: string | undefined
+  status: AssetStatus
+  condition: AssetCondition
+  createdAt: Date
+  updatedAt: Date
+}
+
+export class Asset {
+  constructor(private props: AssetProps) {}
+
+  get id() { return this.props.id }
+  get orgId() { return this.props.orgId }
+  get assetNumber() { return this.props.assetNumber }
+  get name() { return this.props.name }
+  get status() { return this.props.status }
+  get ownerOrgId() { return this.props.ownerOrgId }
+  get operatorOrgId() { return this.props.operatorOrgId }
+
+  updateStatus(status: AssetStatus): void {
+    this.props.status = status
+    this.props.updatedAt = new Date()
+  }
+
+  assignOperator(operatorOrgId: string): void {
+    this.props.operatorOrgId = operatorOrgId
+    this.props.status = 'ASSIGNED_OUT'
+    this.props.updatedAt = new Date()
+  }
+
+  returnOperator(): void {
+    this.props.operatorOrgId = undefined
+    this.props.status = 'ACTIVE'
+    this.props.updatedAt = new Date()
+  }
+
+  toSnapshot(): AssetProps { return { ...this.props } }
+  static fromSnapshot(props: AssetProps): Asset { return new Asset(props) }
+}

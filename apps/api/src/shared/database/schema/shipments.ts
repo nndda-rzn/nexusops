@@ -1,28 +1,26 @@
 import {
-  pgSchema, text, timestamp, numeric, pgEnum, index, uniqueIndex,
+  pgSchema, text, timestamp, numeric, index, uniqueIndex,
 } from 'drizzle-orm/pg-core'
 import { ulid } from 'ulid'
 
 export const shipmentsSchema = pgSchema('shipments')
 
-// ─────────────────────────────────────────
-// Enums
-// ─────────────────────────────────────────
-export const shipmentTypeEnum = pgEnum('shipment_type', ['GROUP', 'ENTITY'])
+// D-03 FIX: use shipmentsSchema.enum() — enums created in 'shipments' schema
+export const shipmentTypeEnum = shipmentsSchema.enum('shipment_type', ['GROUP', 'ENTITY'])
 
-export const shipmentStatusEnum = pgEnum('shipment_status', [
+export const shipmentStatusEnum = shipmentsSchema.enum('shipment_status', [
   'DRAFT', 'BOOKED', 'IN_TRANSIT', 'AT_TERMINAL',
   'CUSTOMS_CLEARANCE', 'DELIVERED', 'COMPLETED',
   'ON_HOLD', 'DELAYED', 'DAMAGED', 'LOST', 'CANCELLED',
 ])
 
-export const legModeEnum = pgEnum('leg_mode', ['SEA', 'RAIL', 'ROAD', 'AIR'])
+export const legModeEnum = shipmentsSchema.enum('leg_mode', ['SEA', 'RAIL', 'ROAD', 'AIR'])
 
-export const legStatusEnum = pgEnum('leg_status', [
+export const legStatusEnum = shipmentsSchema.enum('leg_status', [
   'PLANNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'DELAYED',
 ])
 
-export const exceptionStatusEnum = pgEnum('exception_status', ['OPEN', 'RESOLVED'])
+export const exceptionStatusEnum = shipmentsSchema.enum('exception_status', ['OPEN', 'RESOLVED'])
 
 // ─────────────────────────────────────────
 // Tables
@@ -52,12 +50,12 @@ export const shipments = shipmentsSchema.table('shipments', {
 
 export const shipmentLegs = shipmentsSchema.table('shipment_legs', {
   id: text('id').primaryKey().$defaultFn(() => ulid()),
-  orgId: text('org_id').notNull(),               // owner entity for this leg
+  orgId: text('org_id').notNull(),
   shipmentId: text('shipment_id').notNull(),
   sequenceNumber: text('sequence_number').notNull(),
   mode: legModeEnum('mode').notNull(),
-  carrierOrgId: text('carrier_org_id'),           // entitas yang operasikan
-  ownerOrgId: text('owner_org_id').notNull(),     // entitas yang bertanggung jawab
+  carrierOrgId: text('carrier_org_id'),
+  ownerOrgId: text('owner_org_id').notNull(),
   origin: text('origin').notNull(),
   destination: text('destination').notNull(),
   scheduledDeparture: timestamp('scheduled_departure', { withTimezone: true }),
@@ -109,7 +107,7 @@ export const shipmentManifests = shipmentsSchema.table('manifests', {
   id: text('id').primaryKey().$defaultFn(() => ulid()),
   orgId: text('org_id').notNull(),
   shipmentId: text('shipment_id').notNull(),
-  documentType: text('document_type').notNull(), // MANIFEST | BOL | PACKING_LIST | DELIVERY_ORDER
+  documentType: text('document_type').notNull(),
   fileId: text('file_id').notNull(),
   issuedAt: timestamp('issued_at', { withTimezone: true }).notNull().defaultNow(),
   issuedBy: text('issued_by').notNull(),

@@ -71,6 +71,13 @@
       "when": 1788502219475,
       "tag": "0009_overjoyed_nemesis",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788535373745,
+      "tag": "0010_enum_schema_fix",
+      "breakpoints": true
     }
   ]
 }

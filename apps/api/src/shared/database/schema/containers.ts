@@ -1,44 +1,35 @@
 import {
-  pgSchema,
-  text,
-  timestamp,
-  boolean,
-  integer,
-  numeric,
-  pgEnum,
-  index,
-  uniqueIndex,
+  pgSchema, text, timestamp, boolean, integer, numeric,
+  index, uniqueIndex,
 } from 'drizzle-orm/pg-core'
 import { ulid } from 'ulid'
 
 export const containersSchema = pgSchema('containers')
 
-// ─────────────────────────────────────────
-// Enums
-// ─────────────────────────────────────────
-export const containerTypeEnum = pgEnum('container_type', [
+// D-03 FIX: use containersSchema.enum() — enums created in 'containers' schema
+export const containerTypeEnum = containersSchema.enum('container_type', [
   'DRY', 'REEFER', 'OPEN_TOP', 'FLAT_RACK', 'TANK',
 ])
 
-export const containerSizeEnum = pgEnum('container_size', [
+export const containerSizeEnum = containersSchema.enum('container_size', [
   '20FT', '40FT', '40FT_HC', '45FT',
 ])
 
-export const containerStatusEnum = pgEnum('container_status', [
+export const containerStatusEnum = containersSchema.enum('container_status', [
   'ANNOUNCED', 'ON_VESSEL', 'DISCHARGED', 'IN_TRANSFER',
   'IN_YARD', 'RELEASED', 'GATE_OUT',
   'CUSTOMS_HOLD', 'DAMAGED', 'INSPECTION', 'TRANSSHIPMENT',
 ])
 
-export const movementTypeEnum = pgEnum('movement_type', [
+export const movementTypeEnum = containersSchema.enum('movement_type', [
   'DISCHARGE', 'LOAD', 'YARD_MOVE', 'GATE_IN', 'GATE_OUT', 'RESHUFFLE',
 ])
 
-export const holdTypeEnum = pgEnum('hold_type', [
+export const holdTypeEnum = containersSchema.enum('hold_type', [
   'CUSTOMS_HOLD', 'PAYMENT_HOLD', 'DAMAGE_HOLD', 'INSPECTION_HOLD',
 ])
 
-export const holdStatusEnum = pgEnum('hold_status', ['ACTIVE', 'RELEASED'])
+export const holdStatusEnum = containersSchema.enum('hold_status', ['ACTIVE', 'RELEASED'])
 
 // ─────────────────────────────────────────
 // Tables
@@ -52,7 +43,7 @@ export const containerUnits = containersSchema.table('units', {
   size: containerSizeEnum('size').notNull(),
   status: containerStatusEnum('status').notNull().default('ANNOUNCED'),
   currentLocationId: text('current_location_id'),
-  currentLocationType: text('current_location_type'), // 'vessel' | 'berth' | 'yard_slot' | 'gate'
+  currentLocationType: text('current_location_type'),
   shipmentId: text('shipment_id'),
   vesselId: text('vessel_id'),
   tareWeight: numeric('tare_weight'),
@@ -94,9 +85,9 @@ export const containerInspections = containersSchema.table('inspections', {
   orgId: text('org_id').notNull(),
   containerId: text('container_id').notNull(),
   inspectionType: text('inspection_type').notNull(),
-  result: text('result').notNull(), // PASS | FAIL | CONDITIONAL
+  result: text('result').notNull(),
   findings: text('findings'),
-  photoIds: text('photo_ids').array(), // text[] — ULID refs to storage.files
+  photoIds: text('photo_ids').array(),
   inspectedAt: timestamp('inspected_at', { withTimezone: true }).notNull().defaultNow(),
   inspectorId: text('inspector_id').notNull(),
   nextInspectionDate: timestamp('next_inspection_date', { withTimezone: true }),

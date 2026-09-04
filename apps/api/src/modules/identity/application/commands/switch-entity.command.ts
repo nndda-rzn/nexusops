@@ -6,7 +6,7 @@ import {
   refreshTokens,
 } from '@/shared/database/schema/identity'
 import { eq, and, isNull } from 'drizzle-orm'
-import { hash } from 'argon2'
+import { hashPassword } from '@/shared/auth/password'
 import { signJwt } from '@/shared/auth/jwt'
 import { generateId } from '@/shared/ids'
 import { env } from '@/shared/config/env'
@@ -86,7 +86,7 @@ export async function switchEntityCommand(
   await db.insert(refreshTokens).values({
     id: generateId(), userId: user.id, orgId: targetOrg.id,
     tokenPrefix,                                          // ← prefix stored
-    tokenHash: await hash(refreshTokenValue),
+    tokenHash: await hashPassword(refreshTokenValue),
     expiresAt: refreshExpiresAt,
   })
 

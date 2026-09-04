@@ -2,7 +2,7 @@ import { db } from '@/shared/database/client'
 import { organizations, users, roles, permissions, rolePermissions, orgMembers, orgModuleAccess } from '@/shared/database/schema/identity'
 import { generateId } from '@/shared/ids'
 import { logger } from '@/shared/logging'
-import { hash } from 'argon2'
+import { hashPassword } from '@/shared/auth/password'
 
 // ─────────────────────────────────────────
 // Seed data
@@ -75,8 +75,8 @@ async function seed() {
   // ─────────────────────────────────────────
   // Users
   // ─────────────────────────────────────────
-  const adminPasswordHash = await hash('Admin@123456')
-  const maritimePasswordHash = await hash('Maritime@123456')
+  const adminPasswordHash = await hashPassword('Admin@123456')
+  const maritimePasswordHash = await hashPassword('Maritime@123456')
 
   await db.insert(users).values([
     {

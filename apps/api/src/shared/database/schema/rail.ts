@@ -78,6 +78,7 @@ export const trains = railSchema.table('trains', {
   actualArrival: timestamp('actual_arrival', { withTimezone: true }),
   status: trainStatusEnum('status').notNull().default('SCHEDULED'),
   delayMinutes: integer('delay_minutes').notNull().default(0),
+  delayReason: text('delay_reason'),          // Q-08 FIX: separate from cancellation_reason
   cancellationReason: text('cancellation_reason'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

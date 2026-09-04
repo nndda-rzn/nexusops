@@ -9,7 +9,12 @@ export async function listVehiclesQuery(
 ) {
   const { page, limit } = normalizePagination(params ?? {})
   const offset = toOffset(page, limit)
-  const whereClause = eq(vehicles.orgId, orgId)
+
+  const conditions = [eq(vehicles.orgId, orgId)]
+  if (params?.status) conditions.push(
+    eq(vehicles.status, params.status as 'AVAILABLE' | 'ON_TRIP' | 'MAINTENANCE' | 'OFFLINE')
+  )
+  const whereClause = and(...conditions)
 
   const [rows, [countResult]] = await Promise.all([
     db.select().from(vehicles).where(whereClause).limit(limit).offset(offset),
@@ -45,7 +50,12 @@ export async function listTripsQuery(
 ) {
   const { page, limit } = normalizePagination(params ?? {})
   const offset = toOffset(page, limit)
-  const whereClause = eq(trips.orgId, orgId)
+
+  const conditions = [eq(trips.orgId, orgId)]
+  if (params?.status) conditions.push(
+    eq(trips.status, params.status as 'PLANNED' | 'ASSIGNED' | 'DISPATCHED' | 'EN_ROUTE' | 'AT_CHECKPOINT' | 'ARRIVED_DESTINATION' | 'DELIVERING' | 'COMPLETED' | 'DELAYED' | 'BREAKDOWN' | 'CANCELLED')
+  )
+  const whereClause = and(...conditions)
 
   const [rows, [countResult]] = await Promise.all([
     db.select().from(trips).where(whereClause).limit(limit).offset(offset),

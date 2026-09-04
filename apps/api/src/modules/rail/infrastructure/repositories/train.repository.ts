@@ -19,6 +19,7 @@ function rowToTrain(row: TrainRow): Train {
     actualArrival: row.actualArrival ?? undefined,
     status: row.status,
     delayMinutes: row.delayMinutes,
+    delayReason: row.delayReason ?? undefined,
     cancellationReason: row.cancellationReason ?? undefined,
     createdAt: row.createdAt, updatedAt: row.updatedAt,
   })
@@ -53,7 +54,8 @@ export async function saveTrain(train: Train, db: DbContext): Promise<void> {
     .set({
       status: snap.status, trainsetId: snap.trainsetId,
       actualDeparture: snap.actualDeparture, actualArrival: snap.actualArrival,
-      delayMinutes: snap.delayMinutes, cancellationReason: snap.cancellationReason,
+      delayMinutes: snap.delayMinutes, delayReason: snap.delayReason,
+      cancellationReason: snap.cancellationReason,
       updatedAt: snap.updatedAt,
     })
     .where(and(eq(trains.id, snap.id), eq(trains.orgId, snap.orgId)))

@@ -9,6 +9,8 @@ import { healthRoutes } from '@/bootstrap/health.routes'
 import { loginRoutes } from '@/modules/identity/presentation/routes/login.routes'
 import { tokenRoutes } from '@/modules/identity/presentation/routes/token.routes'
 import { entityRoutes } from '@/modules/identity/presentation/routes/entity.routes'
+import { operationCommandRoutes } from '@/modules/operations/presentation/routes/operation-commands.routes'
+import { listOperationsRoutes } from '@/modules/operations/presentation/routes/list-operations.routes'
 
 export function createApp() {
   return new Elysia()
@@ -79,4 +81,6 @@ export function createApp() {
     .use(loginRoutes)
     .use(tokenRoutes)
     .use(entityRoutes)
+    .use(operationCommandRoutes)
+    .use(listOperationsRoutes)
 }

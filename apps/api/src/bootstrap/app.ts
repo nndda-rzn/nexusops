@@ -13,6 +13,7 @@ import { operationCommandRoutes } from '@/modules/operations/presentation/routes
 import { listOperationsRoutes } from '@/modules/operations/presentation/routes/list-operations.routes'
 import { operationDependencyRoutes } from '@/modules/operations/presentation/routes/operation-dependencies.routes'
 import { interventionRoutes } from '@/modules/operations/presentation/routes/intervention.routes'
+import { containerRoutes } from '@/modules/containers/presentation/routes/containers.routes'
 
 export function createApp() {
   return new Elysia()
@@ -87,4 +88,5 @@ export function createApp() {
     .use(listOperationsRoutes)
     .use(operationDependencyRoutes)
     .use(interventionRoutes)
+    .use(containerRoutes)
 }

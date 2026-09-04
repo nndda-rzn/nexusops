@@ -20,6 +20,7 @@ import { berthRoutes } from '@/modules/terminal/presentation/routes/berth.routes
 import { craneRoutes } from '@/modules/terminal/presentation/routes/crane.routes'
 import { terminalManagementRoutes } from '@/modules/terminal/presentation/routes/terminal-management.routes'
 import { shipmentRoutes } from '@/modules/shipments/presentation/routes/shipments.routes'
+import { shipmentSubRoutes } from '@/modules/shipments/presentation/routes/shipment-sub.routes'
 import { intermodalRoutes } from '@/modules/intermodal/presentation/routes/intermodal.routes'
 
 export function createApp() {
@@ -102,5 +103,6 @@ export function createApp() {
     .use(craneRoutes)
     .use(terminalManagementRoutes)
     .use(shipmentRoutes)
+    .use(shipmentSubRoutes)
     .use(intermodalRoutes)
 }

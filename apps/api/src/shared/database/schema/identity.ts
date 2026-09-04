@@ -1,4 +1,4 @@
-import { pgSchema, text, timestamp, boolean, pgEnum, primaryKey, index, uniqueIndex } from 'drizzle-orm/pg-core'
+import { pgSchema, text, timestamp, boolean, primaryKey, index, uniqueIndex } from 'drizzle-orm/pg-core'
 import { ulid } from 'ulid'
 
 // ─────────────────────────────────────────
@@ -7,9 +7,9 @@ import { ulid } from 'ulid'
 export const identitySchema = pgSchema('identity')
 
 // ─────────────────────────────────────────
-// Enums
+// Enums — D-03 FIX: use identitySchema.enum() not pgEnum() (public schema)
 // ─────────────────────────────────────────
-export const entityTypeEnum = pgEnum('entity_type', [
+export const entityTypeEnum = identitySchema.enum('entity_type', [
   'HOLDING',
   'MARITIME',
   'RAIL',
@@ -18,19 +18,19 @@ export const entityTypeEnum = pgEnum('entity_type', [
   'AVIATION',
 ])
 
-export const orgStatusEnum = pgEnum('org_status', [
+export const orgStatusEnum = identitySchema.enum('org_status', [
   'ACTIVE',
   'SUSPENDED',
   'INACTIVE',
 ])
 
-export const userStatusEnum = pgEnum('user_status', [
+export const userStatusEnum = identitySchema.enum('user_status', [
   'ACTIVE',
   'INACTIVE',
   'SUSPENDED',
 ])
 
-export const loginStatusEnum = pgEnum('login_status', [
+export const loginStatusEnum = identitySchema.enum('login_status', [
   'SUCCESS',
   'FAILED',
 ])

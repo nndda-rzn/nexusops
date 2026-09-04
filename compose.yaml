@@ -1,0 +1,179 @@
+services:
+  # ─────────────────────────────────────────
+  # Reverse Proxy
+  # ─────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - web
+      - api
+    networks:
+      - nexusops
+
+  # ─────────────────────────────────────────
+  # Frontend
+  # ─────────────────────────────────────────
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+    environment:
+      - PUBLIC_API_URL=http://localhost:4000
+      - PUBLIC_WS_URL=ws://localhost:4000
+      - PUBLIC_APP_ENV=development
+    depends_on:
+      - api
+    networks:
+      - nexusops
+
+  # ─────────────────────────────────────────
+  # Backend API
+  # ─────────────────────────────────────────
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.dev
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./apps/api:/app
+      - /app/node_modules
+    env_file:
+      - ./apps/api/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    networks:
+      - nexusops
+
+  # ─────────────────────────────────────────
+  # Python Compute Engine
+  # ─────────────────────────────────────────
+  compute:
+    build:
+      context: ./apps/compute
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./apps/compute:/app
+    env_file:
+      - ./apps/compute/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - nexusops
+
+  # ─────────────────────────────────────────
+  # PostgreSQL + PostGIS
+  # ─────────────────────────────────────────
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d:ro
+    environment:
+      POSTGRES_DB: nexusops
+      POSTGRES_USER: nexusops
+      POSTGRES_PASSWORD: nexusops_secret
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexusops -d nexusops"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - nexusops
+
+  # ─────────────────────────────────────────
+  # Redis
+  # ─────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./infrastructure/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - nexusops
+
+  # ─────────────────────────────────────────
+  # MinIO (Object Storage)
+  # ─────────────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    environment:
+      MINIO_ROOT_USER: nexusops
+      MINIO_ROOT_PASSWORD: nexusops_secret
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nexusops
+
+  # ─────────────────────────────────────────
+  # MinIO Init (create buckets)
+  # ─────────────────────────────────────────
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set nexusops http://minio:9000 nexusops nexusops_secret &&
+        mc mb --ignore-existing nexusops/nexusops-documents &&
+        mc mb --ignore-existing nexusops/nexusops-photos &&
+        mc mb --ignore-existing nexusops/nexusops-reports &&
+        mc mb --ignore-existing nexusops/nexusops-exports &&
+        mc mb --ignore-existing nexusops/nexusops-attachments &&
+        mc mb --ignore-existing nexusops/nexusops-temp &&
+        echo 'MinIO buckets initialized'
+      "
+    networks:
+      - nexusops
+
+# ─────────────────────────────────────────
+# Volumes
+# ─────────────────────────────────────────
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+
+# ─────────────────────────────────────────
+# Networks
+# ─────────────────────────────────────────
+networks:
+  nexusops:
+    driver: bridge

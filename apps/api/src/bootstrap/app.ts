@@ -22,6 +22,9 @@ import { terminalManagementRoutes } from '@/modules/terminal/presentation/routes
 import { shipmentRoutes } from '@/modules/shipments/presentation/routes/shipments.routes'
 import { shipmentSubRoutes } from '@/modules/shipments/presentation/routes/shipment-sub.routes'
 import { intermodalRoutes } from '@/modules/intermodal/presentation/routes/intermodal.routes'
+import { portsRoutes } from '@/modules/shared-master/presentation/routes/ports.routes'
+import { stationsRoutes } from '@/modules/shared-master/presentation/routes/stations.routes'
+import { airportsRoutes } from '@/modules/shared-master/presentation/routes/airports.routes'
 
 export function createApp() {
   return new Elysia()
@@ -87,4 +90,7 @@ export function createApp() {
     .use(shipmentRoutes)
     .use(shipmentSubRoutes)
     .use(intermodalRoutes)
+    .use(portsRoutes)
+    .use(stationsRoutes)
+    .use(airportsRoutes)
 }

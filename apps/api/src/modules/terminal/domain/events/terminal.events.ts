@@ -26,3 +26,23 @@ export interface TerminalGateStatusUpdatedEvent {
   status: 'OPEN' | 'CLOSED' | 'RESTRICTED'
   occurredAt: Date
 }
+
+export interface TerminalBerthCreatedEvent {
+  type: 'terminal.berth_created'
+  berthId: string
+  orgId: string
+  terminalId: string
+  code: string
+  name: string
+  occurredAt: Date
+}
+
+export interface TerminalCraneCreatedEvent {
+  type: 'terminal.crane_created'
+  craneId: string
+  orgId: string
+  terminalId: string
+  code: string
+  craneType: string
+  occurredAt: Date
+}

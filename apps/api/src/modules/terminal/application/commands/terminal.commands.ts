@@ -1,4 +1,4 @@
-import { terminals, gates } from '@/shared/database/schema/terminal'
+import { terminals, gates, berths, cranes } from '@/shared/database/schema/terminal'
 import { eq, and } from 'drizzle-orm'
 import { generateId } from '@/shared/ids'
 import { eventBus } from '@/shared/events'
@@ -93,4 +93,65 @@ export async function updateGateStatusCommand(params: {
       occurredAt: new Date(),
     })
   }
+}
+
+// ─── Berth ───
+
+export async function createBerthCommand(params: {
+  orgId: string
+  terminalId: string
+  code: string
+  name: string
+  lengthM: string
+  maxDraftM: string
+  maxVesselLoa?: string | undefined
+}, db: DbContext) {
+  const id = generateId()
+  await db.insert(berths).values({
+    id, orgId: params.orgId, terminalId: params.terminalId,
+    code: params.code, name: params.name,
+    lengthM: params.lengthM, maxDraftM: params.maxDraftM,
+    maxVesselLoa: params.maxVesselLoa,
+    createdAt: new Date(), updatedAt: new Date(),
+  })
+
+  await eventBus.emit('terminal.berth_created', {
+    type: 'terminal.berth_created',
+    berthId: id, orgId: params.orgId, terminalId: params.terminalId,
+    code: params.code, name: params.name,
+    occurredAt: new Date(),
+  })
+
+  return { id, code: params.code, name: params.name, terminalId: params.terminalId }
+}
+
+// ─── Crane ───
+
+export async function createCraneCommand(params: {
+  orgId: string
+  terminalId: string
+  code: string
+  type: 'STS' | 'RTG' | 'RMG' | 'MOBILE' | 'FORKLIFT'
+  capacityTonnes?: string | undefined
+  maxOutreachM?: string | undefined
+  assetId?: string | undefined
+}, db: DbContext) {
+  const id = generateId()
+  await db.insert(cranes).values({
+    id, orgId: params.orgId, terminalId: params.terminalId,
+    code: params.code, type: params.type,
+    capacityTonnes: params.capacityTonnes,
+    maxOutreachM: params.maxOutreachM,
+    assetId: params.assetId,
+    createdAt: new Date(), updatedAt: new Date(),
+  })
+
+  await eventBus.emit('terminal.crane_created', {
+    type: 'terminal.crane_created',
+    craneId: id, orgId: params.orgId, terminalId: params.terminalId,
+    code: params.code, craneType: params.type,
+    occurredAt: new Date(),
+  })
+
+  return { id, code: params.code, type: params.type, terminalId: params.terminalId }
 }

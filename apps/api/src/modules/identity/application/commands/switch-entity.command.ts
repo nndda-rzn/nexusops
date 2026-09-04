@@ -27,6 +27,7 @@ export interface SwitchEntityCommand {
   currentOrgId: string
   holdingId: string
   targetOrgId: string
+  currentRole: string    // S-06 FIX: pass actual role instead of hardcoding
 }
 
 export interface SwitchEntityResult {
@@ -70,7 +71,7 @@ export async function switchEntityCommand(
 
   const payload: Omit<JwtPayload, 'jti' | 'iat' | 'exp'> = {
     sub: user.id, org_id: targetOrg.id, entity_type: targetOrg.entityType,
-    role: 'group_operations_director',
+    role: cmd.currentRole,        // S-06 FIX: use actual role, not hardcoded
     permissions: ['*'],
     modules,
     holding_id: cmd.holdingId,

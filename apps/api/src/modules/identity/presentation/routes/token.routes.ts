@@ -39,6 +39,7 @@ export const tokenRoutes = new Elysia({ prefix: '/auth' })
       currentOrgId: user.orgId,
       holdingId: user.holdingId,
       targetOrgId: body.entity_id,
+      currentRole: user.role,     // S-06 FIX: pass actual role
     })
 
     cookie[REFRESH_COOKIE]?.set({

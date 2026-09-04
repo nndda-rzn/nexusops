@@ -7,7 +7,13 @@ import type { JwtPayload, TokenPair } from './jwt.types'
 // ─────────────────────────────────────────
 
 function base64url(data: ArrayBuffer): string {
-  return btoa(String.fromCharCode(...new Uint8Array(data)))
+  const bytes = new Uint8Array(data)
+  let binary = ''
+  // Use loop instead of spread to avoid stack overflow on large payloads
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]!)
+  }
+  return btoa(binary)
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=/g, '')
@@ -20,7 +26,7 @@ function base64urlToBuffer(str: string): ArrayBuffer {
   const buffer = new ArrayBuffer(binary.length)
   const view = new Uint8Array(buffer)
   for (let i = 0; i < binary.length; i++) {
-    view[i] = binary.charCodeAt(i)
+    view[i] = binary.charCodeAt(i)!
   }
   return buffer
 }
@@ -30,7 +36,7 @@ async function getSigningKey(): Promise<CryptoKey> {
   const keyData = encoder.encode(env.JWT_SECRET)
   return crypto.subtle.importKey(
     'raw',
-    keyData,
+    keyData.buffer as ArrayBuffer,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign', 'verify']
@@ -110,7 +116,7 @@ export async function verifyJwt(token: string): Promise<JwtPayload> {
 
 function parseExpiry(expiry: string): number {
   const match = expiry.match(/^(\d+)([smhd])$/)
-  if (!match) return 3600 // default 1 hour
+  if (!match) return 3600
 
   const value = parseInt(match[1] ?? '1')
   const unit = match[2]

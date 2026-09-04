@@ -1,6 +1,7 @@
-import { DomainError } from '@/shared/errors'
+import { DomainError, DomainNotFoundError } from '@/shared/errors'
 
-export class CraneNotFoundError extends DomainError {
+// L-01 FIX: 404 not 409
+export class CraneNotFoundError extends DomainNotFoundError {
   constructor(id: string) {
     super('crane-not-found', 'Crane Not Found', `Crane '${id}' not found.`, { id })
   }

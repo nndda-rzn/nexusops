@@ -1,6 +1,7 @@
-import { DomainError } from '@/shared/errors'
+import { DomainError, DomainNotFoundError } from '@/shared/errors'
 
-export class ContainerNotFoundError extends DomainError {
+// L-01 FIX: 404 not 409
+export class ContainerNotFoundError extends DomainNotFoundError {
   constructor(id: string) {
     super('container-not-found', 'Container Not Found',
       `Container '${id}' not found.`, { id })

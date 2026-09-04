@@ -4,7 +4,8 @@ import { UnauthorizedError } from '@/shared/errors'
 import { listVehiclesQuery, getVehicleQuery, listDriversQuery } from '@/modules/road/application/queries/road-resources.query'
 import { registerVehicleCommand, registerDriverCommand } from '@/modules/road/application/commands/register-vehicle-driver.command'
 import { reportVehicleBreakdownCommand } from '@/modules/road/application/commands/trip-events.command'
-import { getVehiclePositionsQuery, updateVehiclePositionCommand } from '@/modules/road/application/queries/road-tracking.query'
+import { getVehiclePositionsQuery } from '@/modules/road/application/queries/road-tracking.query'
+import { updateVehiclePositionCommand } from '@/modules/road/application/commands/update-vehicle-position.command'
 
 export const vehiclesRoutes = new Elysia({ prefix: '/road' })
   .use(authMiddleware)

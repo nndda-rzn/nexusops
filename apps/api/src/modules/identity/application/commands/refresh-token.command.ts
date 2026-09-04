@@ -13,10 +13,6 @@ import { signJwt } from '@/shared/auth/jwt'
 import { InvalidRefreshTokenError } from '@/modules/identity/domain/errors/auth.errors'
 import type { JwtPayload } from '@/shared/auth/jwt.types'
 
-// ─────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────
-
 export interface RefreshTokenCommand {
   refreshToken: string
   ipAddress?: string | undefined
@@ -28,39 +24,41 @@ export interface RefreshTokenResult {
   expiresIn: number
 }
 
-// ─────────────────────────────────────────
-// Handler
-// ─────────────────────────────────────────
-
 export async function refreshTokenCommand(
   cmd: RefreshTokenCommand
 ): Promise<RefreshTokenResult> {
-  const tokenRows = await db
+  // S-05 FIX: lookup by token prefix (8 chars) — O(1) instead of O(n)
+  const tokenPrefix = cmd.refreshToken.substring(0, 8)
+
+  const [tokenRow] = await db
     .select()
     .from(refreshTokens)
-    .where(isNull(refreshTokens.revokedAt))
-    .limit(100)
+    .where(and(
+      eq(refreshTokens.tokenPrefix, tokenPrefix),  // ← fast index lookup
+      isNull(refreshTokens.revokedAt),
+    ))
+    .limit(1)
 
-  let matched = null
-  for (const row of tokenRows) {
-    if (row.expiresAt < new Date()) continue
-    const ok = await verify(row.tokenHash, cmd.refreshToken).catch(() => false)
-    if (ok) { matched = row; break }
-  }
+  if (!tokenRow) throw new InvalidRefreshTokenError()
+  if (tokenRow.expiresAt < new Date()) throw new InvalidRefreshTokenError()
 
-  if (!matched) throw new InvalidRefreshTokenError()
+  // Verify argon2 hash — only 1 row now, not N rows
+  const isValid = await verify(tokenRow.tokenHash, cmd.refreshToken).catch(() => false)
+  if (!isValid) throw new InvalidRefreshTokenError()
 
+  // Revoke used refresh token (rotation)
   await db.update(refreshTokens)
     .set({ revokedAt: new Date() })
-    .where(eq(refreshTokens.id, matched.id))
+    .where(eq(refreshTokens.id, tokenRow.id))
 
   const [user] = await db.select().from(users)
-    .where(eq(users.id, matched.userId)).limit(1)
+    .where(eq(users.id, tokenRow.userId)).limit(1)
   const [org] = await db.select().from(organizations)
-    .where(eq(organizations.id, matched.orgId)).limit(1)
+    .where(eq(organizations.id, tokenRow.orgId)).limit(1)
 
   if (!user || !org) throw new InvalidRefreshTokenError()
-  if (user.status !== 'ACTIVE' || org.status !== 'ACTIVE') throw new InvalidRefreshTokenError()
+  if (user.status !== 'ACTIVE') throw new InvalidRefreshTokenError()
+  if (org.status !== 'ACTIVE') throw new InvalidRefreshTokenError()
 
   const moduleRows = await db
     .select({ moduleKey: orgModuleAccess.moduleKey })

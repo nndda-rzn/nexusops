@@ -1,5 +1,5 @@
 import { handoverRequests } from '@/shared/database/schema/intermodal'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { HandoverNotFoundError, HandoverAlreadyRespondedError } from '@/modules/intermodal/domain/errors/handover.errors'
 import { eventBus } from '@/shared/events'
 import type { DbContext } from '@/shared/database/client'
@@ -9,16 +9,21 @@ export interface RespondHandoverCommand {
   response: 'ACCEPT' | 'REJECT'
   rejectionReason?: string | undefined
   respondedBy: string
+  respondingEntityId: string    // S-03 FIX: added for ownership check
 }
 
 export async function respondHandoverCommand(
   cmd: RespondHandoverCommand,
   db: DbContext
 ): Promise<void> {
+  // S-03 FIX: query with toEntityId ownership check
   const [handover] = await db
     .select()
     .from(handoverRequests)
-    .where(eq(handoverRequests.id, cmd.handoverId))
+    .where(and(
+      eq(handoverRequests.id, cmd.handoverId),
+      eq(handoverRequests.toEntityId, cmd.respondingEntityId),  // ← ownership check
+    ))
     .limit(1)
 
   if (!handover) throw new HandoverNotFoundError(cmd.handoverId)

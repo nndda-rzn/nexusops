@@ -36,13 +36,14 @@ export async function respondInterventionCommand(
   }
 
   const newStatus = cmd.response === 'APPROVE' ? 'APPROVED' : 'REJECTED'
+  const now = new Date()
 
   await db.update(interventionRequests)
     .set({
       status: newStatus,
       respondedBy: cmd.respondedBy,
-      respondedAt: new Date(),
-      ...(cmd.response === 'APPROVE' ? { executedAt: new Date() } : {}),
+      respondedAt: now,
+      ...(cmd.response === 'APPROVE' ? { executedAt: now } : {}),
       ...(cmd.rejectionReason ? { executionNotes: cmd.rejectionReason } : {}),
     })
     .where(eq(interventionRequests.id, cmd.interventionId))
@@ -55,10 +56,24 @@ export async function respondInterventionCommand(
       targetOrgId: intervention.targetOrgId,
       operationId: intervention.operationId,
       interventionType: intervention.interventionType,
-      occurredAt: new Date(),
-      executedAt: new Date(),
+      proposedChanges: intervention.proposedChanges as Record<string, unknown> ?? {},
+      occurredAt: now,
+      executedAt: now,
       wasAutoApproved: false,
+      respondedBy: cmd.respondedBy,
     }
     await eventBus.emit('operation.intervention_executed', event)
+  } else {
+    // L-04 FIX: emit rejection event
+    await eventBus.emit('operation.intervention_rejected', {
+      type: 'operation.intervention_rejected',
+      interventionId: cmd.interventionId,
+      orgId: intervention.orgId,
+      targetOrgId: intervention.targetOrgId,
+      operationId: intervention.operationId,
+      rejectedBy: cmd.respondedBy,
+      rejectionReason: cmd.rejectionReason,
+      occurredAt: now,
+    })
   }
 }

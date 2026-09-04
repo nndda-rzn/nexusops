@@ -1,11 +1,11 @@
 import { Elysia, t } from 'elysia'
 import { authMiddleware, withDbContext } from '@/shared/auth/middleware'
 import { UnauthorizedError } from '@/shared/errors'
-import { createOperationCommand } from '@/modules/operations/application/commands/create-operation.command'
 import { startOperationCommand } from '@/modules/operations/application/commands/start-operation.command'
 import { completeOperationCommand } from '@/modules/operations/application/commands/complete-operation.command'
 import { cancelOperationCommand } from '@/modules/operations/application/commands/cancel-operation.command'
 import { delayOperationCommand } from '@/modules/operations/application/commands/delay-operation.command'
+import { createOperationCommand } from '@/modules/operations/application/commands/create-operation.command'
 import type { OperationType, OperationPriority } from '@/modules/operations/domain/entities/operation.entity'
 
 export const operationCommandRoutes = new Elysia({ prefix: '/operations' })
@@ -13,7 +13,6 @@ export const operationCommandRoutes = new Elysia({ prefix: '/operations' })
 
   .post('/', async ({ user, body }) => {
     if (!user) throw new UnauthorizedError()
-
     const result = await withDbContext(user, (db) =>
       createOperationCommand({
         orgId: user.orgId,
@@ -26,7 +25,6 @@ export const operationCommandRoutes = new Elysia({ prefix: '/operations' })
         createdBy: user.id,
       }, db)
     )
-
     return { data: result }
   }, {
     body: t.Object({
@@ -43,7 +41,7 @@ export const operationCommandRoutes = new Elysia({ prefix: '/operations' })
   .post('/:id/start', async ({ user, params }) => {
     if (!user) throw new UnauthorizedError()
     await withDbContext(user, (db) =>
-      startOperationCommand({ operationId: params.id, actorId: user.id }, db)
+      startOperationCommand({ operationId: params.id, orgId: user.orgId, actorId: user.id }, db)
     )
     return { data: { message: 'Operation started.' } }
   }, {
@@ -53,7 +51,7 @@ export const operationCommandRoutes = new Elysia({ prefix: '/operations' })
   .post('/:id/complete', async ({ user, params }) => {
     if (!user) throw new UnauthorizedError()
     await withDbContext(user, (db) =>
-      completeOperationCommand({ operationId: params.id, actorId: user.id }, db)
+      completeOperationCommand({ operationId: params.id, orgId: user.orgId, actorId: user.id }, db)
     )
     return { data: { message: 'Operation completed.' } }
   }, {
@@ -65,6 +63,7 @@ export const operationCommandRoutes = new Elysia({ prefix: '/operations' })
     await withDbContext(user, (db) =>
       cancelOperationCommand({
         operationId: params.id,
+        orgId: user.orgId,
         reason: body.reason,
         actorId: user.id,
       }, db)
@@ -80,6 +79,7 @@ export const operationCommandRoutes = new Elysia({ prefix: '/operations' })
     await withDbContext(user, (db) =>
       delayOperationCommand({
         operationId: params.id,
+        orgId: user.orgId,
         delayMinutes: body.delay_minutes,
         actorId: user.id,
       }, db)

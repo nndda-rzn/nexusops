@@ -57,6 +57,7 @@ export const intermodalRoutes = new Elysia({ prefix: '/intermodal' })
         response: body.response as 'ACCEPT' | 'REJECT',
         ...(body.rejection_reason ? { rejectionReason: body.rejection_reason } : {}),
         respondedBy: user.id,
+        respondingEntityId: user.orgId,   // S-03 FIX: pass ownership
       }, db)
     )
     return { data: { message: `Handover ${body.response.toLowerCase()}ed.` } }

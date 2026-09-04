@@ -14,6 +14,7 @@ import { listOperationsRoutes } from '@/modules/operations/presentation/routes/l
 import { operationDependencyRoutes } from '@/modules/operations/presentation/routes/operation-dependencies.routes'
 import { interventionRoutes } from '@/modules/operations/presentation/routes/intervention.routes'
 import { containerRoutes } from '@/modules/containers/presentation/routes/containers.routes'
+import { containerHoldRoutes } from '@/modules/containers/presentation/routes/container-holds.routes'
 import { berthRoutes } from '@/modules/terminal/presentation/routes/berth.routes'
 import { craneRoutes } from '@/modules/terminal/presentation/routes/crane.routes'
 import { shipmentRoutes } from '@/modules/shipments/presentation/routes/shipments.routes'
@@ -93,6 +94,7 @@ export function createApp() {
     .use(operationDependencyRoutes)
     .use(interventionRoutes)
     .use(containerRoutes)
+    .use(containerHoldRoutes)
     .use(berthRoutes)
     .use(craneRoutes)
     .use(shipmentRoutes)

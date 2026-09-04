@@ -27,6 +27,7 @@ export interface SwitchEntityCommand {
   currentOrgId: string
   holdingId: string
   targetOrgId: string
+  currentRole: string    // S-06 FIX: pass actual role instead of hardcoding
 }
 
 export interface SwitchEntityResult {
@@ -70,7 +71,7 @@ export async function switchEntityCommand(
 
   const payload: Omit<JwtPayload, 'jti' | 'iat' | 'exp'> = {
     sub: user.id, org_id: targetOrg.id, entity_type: targetOrg.entityType,
-    role: 'group_operations_director',
+    role: cmd.currentRole,        // S-06 FIX: use actual role, not hardcoded
     permissions: ['*'],
     modules,
     holding_id: cmd.holdingId,
@@ -79,10 +80,12 @@ export async function switchEntityCommand(
 
   const { accessToken, expiresIn } = await signJwt(payload)
   const refreshTokenValue = generateId() + generateId() + generateId()
+  const tokenPrefix = refreshTokenValue.substring(0, 8)  // S-05 FIX: store prefix
   const refreshExpiresAt = new Date(Date.now() + parseExpiry(env.JWT_REFRESH_EXPIRES_IN) * 1000)
 
   await db.insert(refreshTokens).values({
     id: generateId(), userId: user.id, orgId: targetOrg.id,
+    tokenPrefix,                                          // ← prefix stored
     tokenHash: await hash(refreshTokenValue),
     expiresAt: refreshExpiresAt,
   })

@@ -31,12 +31,26 @@ export const operationCommandRoutes = new Elysia({ prefix: '/operations' })
     return { data: result }
   }, {
     body: t.Object({
-      type:            t.String(),
+      type: t.Union([
+        t.Literal('VESSEL_LOADING'),
+        t.Literal('VESSEL_DISCHARGE'),
+        t.Literal('YARD_TRANSFER'),
+        t.Literal('GATE_IN'),
+        t.Literal('GATE_OUT'),
+        t.Literal('CUSTOMS_INSPECTION'),
+        t.Literal('MAINTENANCE'),
+        t.Literal('BUNKERING'),
+      ]),
       reference_id:    t.Optional(t.String()),
       reference_type:  t.Optional(t.String()),
       scheduled_start: t.Optional(t.String()),
       scheduled_end:   t.Optional(t.String()),
-      priority:        t.Optional(t.String()),
+      priority: t.Optional(t.Union([
+        t.Literal('LOW'),
+        t.Literal('NORMAL'),
+        t.Literal('HIGH'),
+        t.Literal('CRITICAL'),
+      ])),
     }),
     detail: { tags: ['Operations'], summary: 'Create operation' },
   })

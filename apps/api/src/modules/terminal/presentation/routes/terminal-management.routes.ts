@@ -37,7 +37,13 @@ export const terminalManagementRoutes = new Elysia({ prefix: '/terminal' })
     body: t.Object({
       code:                 t.String(),
       name:                 t.String(),
-      type:                 t.String(),
+      type:                 t.Union([
+        t.Literal('CONTAINER'),
+        t.Literal('BULK'),
+        t.Literal('LIQUID'),
+        t.Literal('RORO'),
+        t.Literal('MULTIPURPOSE'),
+      ]),
       max_vessel_loa:       t.Optional(t.String()),
       max_vessel_draft:     t.Optional(t.String()),
       annual_capacity_teu:  t.Optional(t.Number()),

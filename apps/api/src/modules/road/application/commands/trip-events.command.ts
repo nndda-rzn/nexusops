@@ -5,8 +5,28 @@ import { generateId } from '@/shared/ids'
 import { eventBus } from '@/shared/events'
 import type { DbContext } from '@/shared/database/client'
 
+export interface DelayTripCommand {
+  tripId: string
+  orgId: string
+  delayMinutes: number
+}
+
+export interface RecordCheckpointCommand {
+  tripId: string
+  orgId: string
+  checkpointType: 'GATE_OUT' | 'WEIGH_BRIDGE' | 'TOLL' | 'DELIVERY_POINT'
+  location?: string | undefined
+  notes?: string | undefined
+}
+
+export interface ReportVehicleBreakdownCommand {
+  vehicleId: string
+  orgId: string
+  tripId?: string | undefined
+}
+
 export async function delayTripCommand(
-  cmd: { tripId: string; orgId: string; delayMinutes: number },
+  cmd: DelayTripCommand,
   db: DbContext
 ): Promise<void> {
   const trip = await findTripByIdOrFail(cmd.tripId, cmd.orgId, db)
@@ -29,11 +49,7 @@ export async function delayTripCommand(
 }
 
 export async function recordCheckpointCommand(
-  cmd: {
-    tripId: string; orgId: string
-    checkpointType: 'GATE_OUT' | 'WEIGH_BRIDGE' | 'TOLL' | 'DELIVERY_POINT'
-    location?: string | undefined; notes?: string | undefined
-  },
+  cmd: RecordCheckpointCommand,
   db: DbContext
 ): Promise<{ id: string }> {
   const trip = await findTripByIdOrFail(cmd.tripId, cmd.orgId, db)
@@ -61,7 +77,7 @@ export async function recordCheckpointCommand(
 }
 
 export async function reportVehicleBreakdownCommand(
-  cmd: { vehicleId: string; orgId: string; tripId?: string | undefined },
+  cmd: ReportVehicleBreakdownCommand,
   db: DbContext
 ): Promise<void> {
   await db.update(vehicles)

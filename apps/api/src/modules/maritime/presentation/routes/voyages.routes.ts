@@ -3,6 +3,7 @@ import { authMiddleware, withDbContext } from '@/shared/auth/middleware'
 import { UnauthorizedError } from '@/shared/errors'
 import { listVoyagesQuery } from '@/modules/maritime/application/queries/list-voyages.query'
 import { createVoyageCommand } from '@/modules/maritime/application/commands/create-voyage.command'
+import { parsePaginationQuery } from '@/shared/pagination/query-helpers'
 
 export const voyagesRoutes = new Elysia({ prefix: '/maritime' })
   .use(authMiddleware)
@@ -12,8 +13,7 @@ export const voyagesRoutes = new Elysia({ prefix: '/maritime' })
     if (!user) throw new UnauthorizedError()
     const result = await withDbContext(user, (db) =>
       listVoyagesQuery(user.orgId, db, {
-        ...(query.page ? { page: Number(query.page) } : {}),
-        ...(query.limit ? { limit: Number(query.limit) } : {}),
+        ...parsePaginationQuery(query),
         ...(query.vessel_id ? { vesselId: query.vessel_id } : {}),
       })
     )

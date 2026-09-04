@@ -4,6 +4,7 @@ import { UnauthorizedError } from '@/shared/errors'
 import { listPortCallsQuery } from '@/modules/maritime/application/queries/list-port-calls.query'
 import { getPortCallQuery } from '@/modules/maritime/application/queries/get-port-call.query'
 import { announcePortCallCommand } from '@/modules/maritime/application/commands/announce-port-call.command'
+import { parsePaginationQuery } from '@/shared/pagination/query-helpers'
 
 export const portCallsRoutes = new Elysia({ prefix: '/maritime' })
   .use(authMiddleware)
@@ -13,8 +14,7 @@ export const portCallsRoutes = new Elysia({ prefix: '/maritime' })
     if (!user) throw new UnauthorizedError()
     const result = await withDbContext(user, (db) =>
       listPortCallsQuery(user.orgId, db, {
-        ...(query.page ? { page: Number(query.page) } : {}),
-        ...(query.limit ? { limit: Number(query.limit) } : {}),
+        ...parsePaginationQuery(query),
         ...(query.voyage_id ? { voyageId: query.voyage_id } : {}),
       })
     )

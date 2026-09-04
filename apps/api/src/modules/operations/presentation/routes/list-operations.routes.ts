@@ -4,6 +4,7 @@ import { UnauthorizedError } from '@/shared/errors'
 import { listOperationsQuery } from '@/modules/operations/application/queries/list-operations.query'
 import { getOperationQuery } from '@/modules/operations/application/queries/get-operation.query'
 import type { OperationStatus, OperationType } from '@/modules/operations/domain/entities/operation.entity'
+import { parsePaginationQuery } from '@/shared/pagination/query-helpers'
 
 export const listOperationsRoutes = new Elysia({ prefix: '/operations' })
   .use(authMiddleware)
@@ -23,8 +24,7 @@ export const listOperationsRoutes = new Elysia({ prefix: '/operations' })
         orgId: user.orgId,
         ...(status ? { status } : {}),
         ...(type ? { type } : {}),
-        page: query.page ? Number(query.page) : undefined,
-        limit: query.limit ? Number(query.limit) : undefined,
+        ...parsePaginationQuery(query),
       }, db)
     )
   }, {

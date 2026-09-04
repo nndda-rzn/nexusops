@@ -3,6 +3,7 @@ import { authMiddleware, withDbContext, requireHolding } from '@/shared/auth/mid
 import { UnauthorizedError } from '@/shared/errors'
 import { listPortsQuery, getPortQuery } from '@/modules/shared-master/application/queries/list-ports.query'
 import { createPortCommand } from '@/modules/shared-master/application/commands/create-port.command'
+import { parsePaginationQuery } from '@/shared/pagination/query-helpers'
 
 export const portsRoutes = new Elysia({ prefix: '/shared-master' })
   .use(authMiddleware)
@@ -12,8 +13,7 @@ export const portsRoutes = new Elysia({ prefix: '/shared-master' })
     if (!user) throw new UnauthorizedError()
     const result = await withDbContext(user, (db) =>
       listPortsQuery(db, {
-        ...(query.page ? { page: Number(query.page) } : {}),
-        ...(query.limit ? { limit: Number(query.limit) } : {}),
+        ...parsePaginationQuery(query),
         ...(query.type ? { type: query.type as 'SEA' | 'RIVER' | 'INLAND' } : {}),
       })
     )

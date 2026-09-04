@@ -1,3 +1,5 @@
+import { InvalidPortCallTransitionError } from '../errors/invalid-port-call-transition.error'
+
 // ─────────────────────────────────────────
 // PortCall Entity — State Machine
 // ─────────────────────────────────────────
@@ -62,9 +64,7 @@ export class PortCall {
   transition(to: PortCallStatus): void {
     const allowed = VALID_TRANSITIONS[this.props.status] ?? []
     if (!allowed.includes(to)) {
-      throw new Error(
-        `Cannot transition port call from '${this.props.status}' to '${to}'.`
-      )
+      throw new InvalidPortCallTransitionError(this.props.status, to)
     }
     this.props.status = to
     this.props.updatedAt = new Date()

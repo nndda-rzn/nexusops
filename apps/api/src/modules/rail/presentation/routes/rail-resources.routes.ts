@@ -4,6 +4,7 @@ import { UnauthorizedError } from '@/shared/errors'
 import { listTrainServicesQuery, listTrainsetsQuery } from '@/modules/rail/application/queries/rail-resources.query'
 import { createTrainServiceCommand } from '@/modules/rail/application/commands/create-train-service.command'
 import { createTrainsetCommand } from '@/modules/rail/application/commands/create-trainset.command'
+import { parsePaginationQuery } from '@/shared/pagination/query-helpers'
 
 export const railResourcesRoutes = new Elysia({ prefix: '/rail' })
   .use(authMiddleware)
@@ -13,8 +14,7 @@ export const railResourcesRoutes = new Elysia({ prefix: '/rail' })
     if (!user) throw new UnauthorizedError()
     const result = await withDbContext(user, (db) =>
       listTrainServicesQuery(user.orgId, db, {
-        ...(query.page ? { page: Number(query.page) } : {}),
-        ...(query.limit ? { limit: Number(query.limit) } : {}),
+        ...parsePaginationQuery(query),
       })
     )
     return result
@@ -55,8 +55,7 @@ export const railResourcesRoutes = new Elysia({ prefix: '/rail' })
     if (!user) throw new UnauthorizedError()
     const result = await withDbContext(user, (db) =>
       listTrainsetsQuery(user.orgId, db, {
-        ...(query.page ? { page: Number(query.page) } : {}),
-        ...(query.limit ? { limit: Number(query.limit) } : {}),
+        ...parsePaginationQuery(query),
       })
     )
     return result

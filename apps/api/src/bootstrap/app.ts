@@ -25,6 +25,10 @@ import { intermodalRoutes } from '@/modules/intermodal/presentation/routes/inter
 import { portsRoutes } from '@/modules/shared-master/presentation/routes/ports.routes'
 import { stationsRoutes } from '@/modules/shared-master/presentation/routes/stations.routes'
 import { airportsRoutes } from '@/modules/shared-master/presentation/routes/airports.routes'
+import { vesselsRoutes } from '@/modules/maritime/presentation/routes/vessels.routes'
+import { voyagesRoutes } from '@/modules/maritime/presentation/routes/voyages.routes'
+import { portCallsRoutes } from '@/modules/maritime/presentation/routes/port-calls.routes'
+import { portCallLifecycleRoutes } from '@/modules/maritime/presentation/routes/port-call-lifecycle.routes'
 
 export function createApp() {
   return new Elysia()
@@ -93,4 +97,8 @@ export function createApp() {
     .use(portsRoutes)
     .use(stationsRoutes)
     .use(airportsRoutes)
+    .use(vesselsRoutes)
+    .use(voyagesRoutes)
+    .use(portCallsRoutes)
+    .use(portCallLifecycleRoutes)
 }

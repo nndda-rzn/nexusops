@@ -1,0 +1,19 @@
+receivers:
+  - id: default
+    pipelines:
+      - type: otlp
+        config:
+          grpc:
+            vhost: 0.0.0.0
+            port: 4317
+          http:
+            vhost: 0.0.0.0
+            port: 4318
+
+exporters:
+  - id: prometheus
+    pipelines:
+      - type: prometheus
+        config:
+          host: 0.0.0.0
+          port: 8889

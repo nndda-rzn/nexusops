@@ -5,7 +5,6 @@ import {
   integer,
   boolean,
   jsonb,
-  pgEnum,
   index,
   uniqueIndex,
 } from 'drizzle-orm/pg-core'
@@ -17,84 +16,53 @@ import { ulid } from 'ulid'
 export const operationsSchema = pgSchema('operations')
 
 // ─────────────────────────────────────────
-// Enums
+// Enums — D-03 FIX: use operationsSchema.enum() so enums are created
+// in the 'operations' schema, not the public schema.
 // ─────────────────────────────────────────
-export const operationTypeEnum = pgEnum('operation_type', [
-  'VESSEL_ARRIVAL',
-  'VESSEL_BERTHING',
-  'VESSEL_UNBERTHING',
-  'CONTAINER_DISCHARGE',
-  'CONTAINER_LOADING',
-  'YARD_MOVE',
-  'TRAIN_ARRIVAL',
-  'TRAIN_DEPARTURE',
-  'TRUCK_GATE_IN',
-  'TRUCK_GATE_OUT',
-  'WAREHOUSE_RECEIVING',
-  'WAREHOUSE_DISPATCH',
-  'FLIGHT_ARRIVAL',
-  'FLIGHT_DEPARTURE',
-  'CARGO_LOADING_AIR',
-  'MAINTENANCE',
-  'INSPECTION',
-  'INTERMODAL_HANDOVER',
+export const operationTypeEnum = operationsSchema.enum('operation_type', [
+  'VESSEL_ARRIVAL', 'VESSEL_BERTHING', 'VESSEL_UNBERTHING',
+  'CONTAINER_DISCHARGE', 'CONTAINER_LOADING', 'YARD_MOVE',
+  'TRAIN_ARRIVAL', 'TRAIN_DEPARTURE',
+  'TRUCK_GATE_IN', 'TRUCK_GATE_OUT',
+  'WAREHOUSE_RECEIVING', 'WAREHOUSE_DISPATCH',
+  'FLIGHT_ARRIVAL', 'FLIGHT_DEPARTURE', 'CARGO_LOADING_AIR',
+  'MAINTENANCE', 'INSPECTION', 'INTERMODAL_HANDOVER',
 ])
 
-export const operationStatusEnum = pgEnum('operation_status', [
-  'SCHEDULED',
-  'IN_PROGRESS',
-  'COMPLETED',
-  'CANCELLED',
-  'DELAYED',
-  'ON_HOLD',
+export const operationStatusEnum = operationsSchema.enum('operation_status', [
+  'SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'DELAYED', 'ON_HOLD',
 ])
 
-export const operationPriorityEnum = pgEnum('operation_priority', [
-  'LOW',
-  'NORMAL',
-  'HIGH',
-  'CRITICAL',
+export const operationPriorityEnum = operationsSchema.enum('operation_priority', [
+  'LOW', 'NORMAL', 'HIGH', 'CRITICAL',
 ])
 
-export const dependencyTypeEnum = pgEnum('dependency_type', [
-  'FINISH_TO_START',
-  'START_TO_START',
-  'FINISH_TO_FINISH',
-  'START_TO_FINISH',
+export const dependencyTypeEnum = operationsSchema.enum('dependency_type', [
+  'FINISH_TO_START', 'START_TO_START', 'FINISH_TO_FINISH', 'START_TO_FINISH',
 ])
 
-export const interventionTypeEnum = pgEnum('intervention_type', [
-  'RESCHEDULE',
-  'REALLOCATE',
-  'CANCEL',
-  'REPRIORITIZE',
-  'EMERGENCY_STOP',
+export const interventionTypeEnum = operationsSchema.enum('intervention_type', [
+  'RESCHEDULE', 'REALLOCATE', 'CANCEL', 'REPRIORITIZE', 'EMERGENCY_STOP',
 ])
 
-export const interventionStatusEnum = pgEnum('intervention_status', [
-  'PENDING',
-  'APPROVED',
-  'REJECTED',
-  'EXECUTED',
-  'AUTO_APPROVED',
-  'CANCELLED',
+export const interventionStatusEnum = operationsSchema.enum('intervention_status', [
+  'PENDING', 'APPROVED', 'REJECTED', 'EXECUTED', 'AUTO_APPROVED', 'CANCELLED',
 ])
 
 // ─────────────────────────────────────────
 // Tables
 // ─────────────────────────────────────────
 
-// Operations — core operational state
 export const operations = operationsSchema.table('operations', {
   id: text('id').primaryKey().$defaultFn(() => ulid()),
   orgId: text('org_id').notNull(),
   type: operationTypeEnum('type').notNull(),
   status: operationStatusEnum('status').notNull().default('SCHEDULED'),
   priority: operationPriorityEnum('priority').notNull().default('NORMAL'),
-  referenceId: text('reference_id'),       // FK ke entity terkait (vessel, container, dll)
-  referenceType: text('reference_type'),   // 'vessel' | 'container' | 'train' | dll
+  referenceId: text('reference_id'),
+  referenceType: text('reference_type'),
   isCrossEntity: boolean('is_cross_entity').notNull().default(false),
-  relatedEntityIds: text('related_entity_ids').array(), // entitas lain yang terlibat
+  relatedEntityIds: text('related_entity_ids').array(),
   scheduledStart: timestamp('scheduled_start', { withTimezone: true }),
   scheduledEnd: timestamp('scheduled_end', { withTimezone: true }),
   actualStart: timestamp('actual_start', { withTimezone: true }),
@@ -113,13 +81,12 @@ export const operations = operationsSchema.table('operations', {
   index('operations_reference_idx').on(t.orgId, t.referenceType, t.referenceId),
 ])
 
-// Operation Dependencies — for dependency graph
 export const operationDependencies = operationsSchema.table('operation_dependencies', {
   id: text('id').primaryKey().$defaultFn(() => ulid()),
   orgId: text('org_id').notNull(),
   operationId: text('operation_id').notNull(),
   dependsOnId: text('depends_on_id').notNull(),
-  dependsOnOrgId: text('depends_on_org_id').notNull(), // cross-entity dependency
+  dependsOnOrgId: text('depends_on_org_id').notNull(),
   dependencyType: dependencyTypeEnum('dependency_type').notNull().default('FINISH_TO_START'),
   createdBy: text('created_by').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -129,22 +96,20 @@ export const operationDependencies = operationsSchema.table('operation_dependenc
   uniqueIndex('op_deps_unique_idx').on(t.operationId, t.dependsOnId),
 ])
 
-// Operation Resources — allocated resources
 export const operationResources = operationsSchema.table('operation_resources', {
   id: text('id').primaryKey().$defaultFn(() => ulid()),
   orgId: text('org_id').notNull(),
   operationId: text('operation_id').notNull(),
-  resourceType: text('resource_type').notNull(), // 'crane' | 'berth' | 'vehicle' | 'employee'
+  resourceType: text('resource_type').notNull(),
   resourceId: text('resource_id').notNull(),
   quantity: integer('quantity').notNull().default(1),
-  status: text('status').notNull().default('ALLOCATED'), // ALLOCATED | RELEASED | CONFLICT
+  status: text('status').notNull().default('ALLOCATED'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   index('op_resources_operation_idx').on(t.orgId, t.operationId),
   index('op_resources_resource_idx').on(t.resourceType, t.resourceId),
 ])
 
-// Operation Events — audit trail per operation
 export const operationEvents = operationsSchema.table('operation_events', {
   id: text('id').primaryKey().$defaultFn(() => ulid()),
   orgId: text('org_id').notNull(),
@@ -153,17 +118,16 @@ export const operationEvents = operationsSchema.table('operation_events', {
   payload: jsonb('payload'),
   occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull().defaultNow(),
   actorId: text('actor_id'),
-  actorType: text('actor_type').notNull().default('USER'), // USER | SYSTEM | HOLDING
+  actorType: text('actor_type').notNull().default('USER'),
 }, (t) => [
   index('op_events_operation_idx').on(t.orgId, t.operationId),
   index('op_events_occurred_idx').on(t.orgId, t.occurredAt),
 ])
 
-// Intervention Requests — Holding intervensi operasi entitas
 export const interventionRequests = operationsSchema.table('intervention_requests', {
   id: text('id').primaryKey().$defaultFn(() => ulid()),
-  orgId: text('org_id').notNull(),         // holding org_id
-  targetOrgId: text('target_org_id').notNull(), // entitas yang diintervensi
+  orgId: text('org_id').notNull(),
+  targetOrgId: text('target_org_id').notNull(),
   operationId: text('operation_id').notNull(),
   interventionType: interventionTypeEnum('intervention_type').notNull(),
   reason: text('reason').notNull(),
@@ -172,7 +136,7 @@ export const interventionRequests = operationsSchema.table('intervention_request
   requestedBy: text('requested_by').notNull(),
   respondedBy: text('responded_by'),
   respondedAt: timestamp('responded_at', { withTimezone: true }),
-  slaDeadline: timestamp('sla_deadline', { withTimezone: true }).notNull(), // +15 menit
+  slaDeadline: timestamp('sla_deadline', { withTimezone: true }).notNull(),
   escalatedTo: text('escalated_to'),
   escalatedAt: timestamp('escalated_at', { withTimezone: true }),
   executedAt: timestamp('executed_at', { withTimezone: true }),
@@ -184,4 +148,5 @@ export const interventionRequests = operationsSchema.table('intervention_request
   index('interventions_operation_idx').on(t.operationId),
   index('interventions_status_idx').on(t.status),
   index('interventions_sla_idx').on(t.slaDeadline),
+  index('interventions_pending_sla_idx').on(t.status, t.slaDeadline),
 ])

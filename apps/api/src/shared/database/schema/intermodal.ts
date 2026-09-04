@@ -1,26 +1,24 @@
 import {
-  pgSchema, text, timestamp, jsonb, pgEnum, index,
+  pgSchema, text, timestamp, jsonb, index,
 } from 'drizzle-orm/pg-core'
 import { ulid } from 'ulid'
 
 export const intermodalSchema = pgSchema('intermodal')
 
-// ─────────────────────────────────────────
-// Enums
-// ─────────────────────────────────────────
-export const handoverStatusEnum = pgEnum('handover_status', [
+// D-03 FIX: use intermodalSchema.enum() — enums created in 'intermodal' schema
+export const handoverStatusEnum = intermodalSchema.enum('handover_status', [
   'PENDING', 'ACCEPTED', 'REJECTED', 'CANCELLED', 'COMPLETED',
 ])
 
-export const coordinationTypeEnum = pgEnum('coordination_type', [
+export const coordinationTypeEnum = intermodalSchema.enum('coordination_type', [
   'RESOURCE_REQUEST', 'SCHEDULE_SYNC', 'CAPACITY_CHECK', 'EMERGENCY',
 ])
 
-export const coordinationStatusEnum = pgEnum('coordination_status', [
+export const coordinationStatusEnum = intermodalSchema.enum('coordination_status', [
   'OPEN', 'IN_PROGRESS', 'RESOLVED', 'CANCELLED',
 ])
 
-export const transferStatusEnum = pgEnum('transfer_status', [
+export const transferStatusEnum = intermodalSchema.enum('transfer_status', [
   'PENDING', 'APPROVED', 'SETTLED', 'DISPUTED',
 ])
 

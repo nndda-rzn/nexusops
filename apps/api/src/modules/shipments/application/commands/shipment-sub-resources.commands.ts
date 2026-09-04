@@ -36,6 +36,15 @@ export async function addShipmentLegCommand(params: {
     status: 'PLANNED', delayMinutes: '0',
     createdAt: new Date(), updatedAt: new Date(),
   })
+
+  await eventBus.emit('shipment.leg_added', {
+    type: 'shipment.leg_added',
+    shipmentId: params.shipmentId, orgId: params.orgId,
+    legId: id, sequenceNumber: params.sequenceNumber,
+    mode: params.mode, origin: params.origin, destination: params.destination,
+    occurredAt: new Date(),
+  })
+
   return { id, sequenceNumber: params.sequenceNumber, mode: params.mode, status: 'PLANNED' }
 }
 
@@ -47,6 +56,11 @@ export async function updateLegStatusCommand(params: {
   actualArrival?: Date | undefined
   delayMinutes?: number | undefined
 }, db: DbContext) {
+  const [leg] = await db.select({ id: shipmentLegs.id, shipmentId: shipmentLegs.shipmentId })
+    .from(shipmentLegs)
+    .where(and(eq(shipmentLegs.id, params.legId), eq(shipmentLegs.orgId, params.orgId)))
+    .limit(1)
+
   await db.update(shipmentLegs)
     .set({
       status: params.status,
@@ -56,6 +70,15 @@ export async function updateLegStatusCommand(params: {
       updatedAt: new Date(),
     })
     .where(and(eq(shipmentLegs.id, params.legId), eq(shipmentLegs.orgId, params.orgId)))
+
+  if (leg) {
+    await eventBus.emit('shipment.leg_status_updated', {
+      type: 'shipment.leg_status_updated',
+      shipmentId: leg.shipmentId, orgId: params.orgId,
+      legId: params.legId, status: params.status,
+      occurredAt: new Date(),
+    })
+  }
 }
 
 // ─── Milestones ───
@@ -120,12 +143,26 @@ export async function resolveExceptionCommand(params: {
   exceptionId: string
   resolvedBy: string
 }, db: DbContext) {
+  const [exception] = await db.select({ id: shipmentExceptions.id, shipmentId: shipmentExceptions.shipmentId })
+    .from(shipmentExceptions)
+    .where(and(eq(shipmentExceptions.id, params.exceptionId), eq(shipmentExceptions.orgId, params.orgId)))
+    .limit(1)
+
   await db.update(shipmentExceptions)
     .set({ status: 'RESOLVED', resolvedBy: params.resolvedBy, resolvedAt: new Date() })
     .where(and(
       eq(shipmentExceptions.id, params.exceptionId),
       eq(shipmentExceptions.orgId, params.orgId),
     ))
+
+  if (exception) {
+    await eventBus.emit('shipment.exception_resolved', {
+      type: 'shipment.exception_resolved',
+      shipmentId: exception.shipmentId, orgId: params.orgId,
+      exceptionId: params.exceptionId, resolvedBy: params.resolvedBy,
+      occurredAt: new Date(),
+    })
+  }
 }
 
 export async function listExceptionsQuery(

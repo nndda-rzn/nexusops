@@ -1,6 +1,7 @@
 import { terminals, gates } from '@/shared/database/schema/terminal'
 import { eq, and } from 'drizzle-orm'
 import { generateId } from '@/shared/ids'
+import { eventBus } from '@/shared/events'
 import type { DbContext } from '@/shared/database/client'
 
 // ─── Terminal ───
@@ -22,6 +23,14 @@ export async function createTerminalCommand(params: {
     annualCapacityTeu: params.annualCapacityTeu,
     createdAt: new Date(), updatedAt: new Date(),
   })
+
+  await eventBus.emit('terminal.created', {
+    type: 'terminal.created',
+    terminalId: id, orgId: params.orgId,
+    code: params.code, name: params.name, terminalType: params.type,
+    occurredAt: new Date(),
+  })
+
   return { id, code: params.code, name: params.name }
 }
 
@@ -46,6 +55,14 @@ export async function createGateCommand(params: {
     status: 'CLOSED',
     createdAt: new Date(), updatedAt: new Date(),
   })
+
+  await eventBus.emit('terminal.gate_created', {
+    type: 'terminal.gate_created',
+    gateId: id, orgId: params.orgId, terminalId: params.terminalId,
+    gateNumber: params.gateNumber, gateType: params.type,
+    occurredAt: new Date(),
+  })
+
   return { id, gateNumber: params.gateNumber, type: params.type }
 }
 
@@ -59,7 +76,21 @@ export async function updateGateStatusCommand(params: {
   gateId: string
   status: 'OPEN' | 'CLOSED' | 'RESTRICTED'
 }, db: DbContext) {
+  const [gate] = await db.select({ id: gates.id, terminalId: gates.terminalId })
+    .from(gates)
+    .where(and(eq(gates.id, params.gateId), eq(gates.orgId, params.orgId)))
+    .limit(1)
+
   await db.update(gates)
     .set({ status: params.status, updatedAt: new Date() })
     .where(and(eq(gates.id, params.gateId), eq(gates.orgId, params.orgId)))
+
+  if (gate) {
+    await eventBus.emit('terminal.gate_status_updated', {
+      type: 'terminal.gate_status_updated',
+      gateId: params.gateId, orgId: params.orgId,
+      terminalId: gate.terminalId, status: params.status,
+      occurredAt: new Date(),
+    })
+  }
 }

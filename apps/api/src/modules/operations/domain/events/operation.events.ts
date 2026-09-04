@@ -1,4 +1,4 @@
-import type { OperationType, OperationStatus } from '../entities/operation.entity'
+import type { OperationType, OperationStatus, OperationPriority } from '../entities/operation.entity'
 
 export interface OperationCreatedEvent {
   type: 'operation.created'
@@ -89,6 +89,15 @@ export interface InterventionExecutedEvent {
   respondedBy?: string | undefined           // L-02 FIX: added
 }
 
+export interface OperationReprioritizedEvent {
+  type: 'operation.reprioritized'
+  operationId: string
+  orgId: string
+  priority: OperationPriority
+  occurredAt: Date
+  actorId: string
+}
+
 export type OperationEvent =
   | OperationCreatedEvent
   | OperationStartedEvent
@@ -96,5 +105,6 @@ export type OperationEvent =
   | OperationDelayedEvent
   | OperationCancelledEvent
   | OperationStatusChangedEvent
+  | OperationReprioritizedEvent
   | InterventionRequestedEvent
   | InterventionExecutedEvent

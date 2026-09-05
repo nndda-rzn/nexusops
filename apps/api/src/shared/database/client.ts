@@ -73,6 +73,18 @@ export async function withRequestContext<T>(
   const reservedClient = await queryClient.reserve()
 
   try {
+    // postgres-js v3 reserve() returns a bare Sql instance WITHOUT the fields
+    // drizzle's postgres-js driver expects: `.options` (read in construct()
+    // for client.options.parsers) and `.begin`/`.close` (used by transaction()).
+    // Copy them from the main client so reserved connections work with drizzle.
+    const reservedSql = reservedClient as typeof queryClient & {
+      options?: typeof queryClient.options
+      begin?: typeof queryClient.begin
+      close?: (cb?: unknown) => Promise<void>
+    }
+    if (!reservedSql.options) reservedSql.options = queryClient.options
+    if (!reservedSql.begin) reservedSql.begin = queryClient.begin
+    if (!reservedSql.close) reservedSql.close = queryClient.end as unknown as (cb?: unknown) => Promise<void>
     const reservedDb = drizzle(reservedClient)
 
     // R-01 FIX: wrap in explicit transaction so set_config LOCAL is truly scoped

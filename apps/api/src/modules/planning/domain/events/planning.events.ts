@@ -16,3 +16,20 @@ export interface OptimizationJobStatusChangedEvent {
   occurredAt: Date
   actorId?: string | undefined
 }
+export interface PlanActivatedEvent {
+  type: 'planning.plan_activated'
+  planId: string
+  orgId: string
+  planType: string
+  optimizationJobId?: string | undefined
+  occurredAt: Date
+  activatedBy: string
+}
+export interface ScenarioSelectedEvent {
+  type: 'planning.scenario_selected'
+  scenarioId: string
+  orgId: string
+  planType: string
+  occurredAt: Date
+  selectedBy: string
+}

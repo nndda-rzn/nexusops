@@ -12,17 +12,28 @@ STREAM_SUFFIX_TO_TYPE and looks the handler up by canonical type.
 from collections.abc import Awaitable, Callable
 from typing import Any
 
+from src.modules.network_analysis.handler import (
+    critical_path_handler,
+    delay_propagation_handler,
+    network_analysis_handler,
+)
 from src.modules.yard_optimization.handler import yard_optimization_handler
 
 Handler = Callable[[dict[str, Any]], Awaitable[dict[str, Any]]]
 
 HANDLERS: dict[str, Handler] = {
     "YARD_OPTIMIZATION": yard_optimization_handler,
+    "NETWORK_ANALYSIS": network_analysis_handler,
+    "CRITICAL_PATH": critical_path_handler,
+    "DELAY_PROPAGATION": delay_propagation_handler,
 }
 
 # Stream suffix (jobs:<suffix>) → canonical job type
 STREAM_SUFFIX_TO_TYPE: dict[str, str] = {
     "yard_optimization": "YARD_OPTIMIZATION",
+    "network_analysis": "NETWORK_ANALYSIS",
+    "critical_path": "CRITICAL_PATH",
+    "delay_propagation": "DELAY_PROPAGATION",
 }
 
 # Errors that must never auto-retry

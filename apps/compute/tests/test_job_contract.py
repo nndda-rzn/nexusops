@@ -67,9 +67,9 @@ def test_yard_optimization_handler_registered() -> None:
     assert STREAM_SUFFIX_TO_TYPE["yard_optimization"] == "YARD_OPTIMIZATION"
 
 
-def test_unregistered_job_type_absent() -> None:
-    # Job types without a handler must NOT be silently consumed
-    assert "NETWORK_ANALYSIS" not in HANDLERS
+def test_all_registered_handlers_have_stream_suffix() -> None:
+    """Every registered handler must have a dispatchable stream suffix."""
+    assert set(HANDLERS.keys()) == set(STREAM_SUFFIX_TO_TYPE.values())
 
 
 def test_backoff_schedule_seconds() -> None:

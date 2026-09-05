@@ -81,6 +81,7 @@ export const inventory = warehouseSchema.table('inventory', {
   index('inventory_org_idx').on(t.orgId),
   index('inventory_warehouse_idx').on(t.orgId, t.warehouseId),
   index('inventory_sku_idx').on(t.orgId, t.sku),
+  uniqueIndex('inventory_warehouse_sku_unique').on(t.warehouseId, t.sku),
 ])
 
 // Pickings

@@ -21,7 +21,7 @@ import type { EmployeeRegisteredEvent, EmployeeStatusChangedEvent, WorkforceAssi
 import type { AssetRegisteredEvent, AssetStatusChangedEvent, AssetOperatorAssignedEvent, AssetOperatorReturnedEvent, AssetInspectionCompletedEvent, AssetMaintenanceRequiredEvent } from '@/modules/assets/domain/events/assets.events'
 import type { MaintenanceWorkOrderCreatedEvent, MaintenanceWorkOrderStartedEvent, MaintenanceWorkOrderCompletedEvent, MaintenanceWorkOrderClosedEvent, MaintenanceFailureReportedEvent, MaintenancePartsRequestedEvent } from '@/modules/maintenance/domain/events/maintenance.events'
 import type { YardContainerPlacedEvent, YardContainerMovedEvent, YardContainerRemovedEvent, YardSlotReservedEvent } from '@/modules/yard/domain/events/yard.events'
-import type { WarehouseReceivedEvent, WarehousePutawayCompletedEvent, WarehousePickingStartedEvent, WarehouseDispatchedEvent, WarehouseInventoryAdjustedEvent, WarehouseCycleCountCompletedEvent } from '@/modules/warehouse/domain/events/warehouse.events'
+import type { WarehouseReceivedEvent, WarehousePutawayCompletedEvent, WarehousePickingStartedEvent, WarehousePickingCompletedEvent, WarehouseDispatchedEvent, WarehouseInventoryAdjustedEvent, WarehouseCycleCountCompletedEvent } from '@/modules/warehouse/domain/events/warehouse.events'
 import type { AviationFlightScheduledEvent, AviationSlotConfirmedEvent, AviationManifestClosedEvent, AviationLoadPlanApprovedEvent, AviationFlightDepartedEvent, AviationFlightArrivedEvent, AviationFlightDelayedEvent, AviationAogDeclaredEvent, AviationCargoAcceptedEvent } from '@/modules/aviation/domain/events/aviation.events'
 import type { HandoverRequestedEvent, HandoverAcceptedEvent, HandoverRejectedEvent, HandoverCompletedEvent, HandoverCancelledEvent, ShipmentCreatedEvent, ShipmentStatusChangedEvent, ShipmentMilestoneReachedEvent, ShipmentExceptionRaisedEvent, ContainerAnnouncedEvent, ContainerMovedEvent, ContainerGateInEvent, ContainerGateOutEvent, ContainerDischargedEvent, ContainerHeldEvent, ContainerReleasedEvent, VehiclePositionUpdatedEvent } from '@/shared/events/event-types'
 
@@ -63,6 +63,7 @@ export type EventMap = {
   'yard.container_removed': YardContainerRemovedEvent; 'yard.slot_reserved': YardSlotReservedEvent
   'warehouse.received': WarehouseReceivedEvent; 'warehouse.putaway_completed': WarehousePutawayCompletedEvent
   'warehouse.picking_started': WarehousePickingStartedEvent; 'warehouse.dispatched': WarehouseDispatchedEvent
+  'warehouse.picking_completed': WarehousePickingCompletedEvent
   'warehouse.inventory_adjusted': WarehouseInventoryAdjustedEvent; 'warehouse.cycle_count_completed': WarehouseCycleCountCompletedEvent
   'aviation.flight_scheduled': AviationFlightScheduledEvent; 'aviation.slot_confirmed': AviationSlotConfirmedEvent
   'aviation.manifest_closed': AviationManifestClosedEvent; 'aviation.load_plan_approved': AviationLoadPlanApprovedEvent

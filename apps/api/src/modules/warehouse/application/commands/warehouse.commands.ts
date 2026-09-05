@@ -1,4 +1,5 @@
-import { warehouses, receivings, inventory, pickings, dispatches, cycleCounts } from '@/shared/database/schema/warehouse'
+import { warehouses, receivings, inventory, pickings, dispatches } from '@/shared/database/schema/warehouse'
+import { eq, and } from 'drizzle-orm'
 import { generateId } from '@/shared/ids'
 import { eventBus } from '@/shared/events'
 import type { DbContext } from '@/shared/database/client'
@@ -42,28 +43,54 @@ export async function receiveCargoCommand(cmd: ReceiveCargoCommand, db: DbContex
   return { id }
 }
 
-// ─── Inventory ───
+// ─── Inventory (P3R-03 FIX: upsert by warehouse+sku) ───
 export interface AdjustInventoryCommand {
   orgId: string; warehouseId: string; sku: string; description?: string | undefined
   quantityOnHand: string; locationId?: string | undefined; batchNumber?: string | undefined
   expiryDate?: string | undefined; condition?: 'GOOD' | 'DAMAGED' | 'QUARANTINE' | undefined
 }
 export async function adjustInventoryCommand(cmd: AdjustInventoryCommand, db: DbContext): Promise<{ id: string }> {
-  const id = generateId()
-  await db.insert(inventory).values({
-    id, orgId: cmd.orgId, warehouseId: cmd.warehouseId,
-    sku: cmd.sku, description: cmd.description,
-    quantityOnHand: cmd.quantityOnHand, quantityReserved: '0',
-    locationId: cmd.locationId, batchNumber: cmd.batchNumber,
-    expiryDate: cmd.expiryDate, condition: cmd.condition ?? 'GOOD',
-    updatedAt: new Date(),
-  })
+  const now = new Date()
+  const [existing] = await db.select({ id: inventory.id }).from(inventory)
+    .where(and(eq(inventory.warehouseId, cmd.warehouseId), eq(inventory.sku, cmd.sku)))
+    .limit(1)
+
+  if (existing) {
+    await db.update(inventory)
+      .set({
+        quantityOnHand: cmd.quantityOnHand,
+        description: cmd.description ?? undefined,
+        locationId: cmd.locationId ?? undefined,
+        batchNumber: cmd.batchNumber ?? undefined,
+        expiryDate: cmd.expiryDate ?? undefined,
+        condition: cmd.condition ?? 'GOOD',
+        updatedAt: now,
+      })
+      .where(eq(inventory.id, existing.id))
+  } else {
+    const id = generateId()
+    await db.insert(inventory).values({
+      id, orgId: cmd.orgId, warehouseId: cmd.warehouseId,
+      sku: cmd.sku, description: cmd.description,
+      quantityOnHand: cmd.quantityOnHand, quantityReserved: '0',
+      locationId: cmd.locationId, batchNumber: cmd.batchNumber,
+      expiryDate: cmd.expiryDate, condition: cmd.condition ?? 'GOOD',
+      updatedAt: now,
+    })
+    await eventBus.emit('warehouse.inventory_adjusted', {
+      type: 'warehouse.inventory_adjusted',
+      warehouseId: cmd.warehouseId, orgId: cmd.orgId,
+      sku: cmd.sku, occurredAt: now,
+    })
+    return { id }
+  }
+
   await eventBus.emit('warehouse.inventory_adjusted', {
     type: 'warehouse.inventory_adjusted',
     warehouseId: cmd.warehouseId, orgId: cmd.orgId,
-    sku: cmd.sku, occurredAt: new Date(),
+    sku: cmd.sku, occurredAt: now,
   })
-  return { id }
+  return { id: existing.id }
 }
 
 // ─── Picking ───
@@ -105,43 +132,6 @@ export async function dispatchCargoCommand(cmd: DispatchCargoCommand, db: DbCont
     type: 'warehouse.dispatched',
     warehouseId: cmd.warehouseId, orgId: cmd.orgId,
     dispatchId: id, occurredAt: now,
-  })
-  return { id }
-}
-
-// ─── Cycle Count ───
-export interface ConductCycleCountCommand {
-  orgId: string; warehouseId: string; cycleCountId: string
-  itemsCounted: number; discrepanciesFound: number; conductedBy?: string | undefined
-}
-export async function conductCycleCountCommand(cmd: ConductCycleCountCommand, db: DbContext): Promise<void> {
-  const { eq } = await import('drizzle-orm')
-  const now = new Date()
-  await db.update(cycleCounts)
-    .set({
-      status: 'COMPLETED', completedAt: now,
-      itemsCounted: cmd.itemsCounted,
-      discrepanciesFound: cmd.discrepanciesFound,
-      conductedBy: cmd.conductedBy, updatedAt: now,
-    })
-    .where(eq(cycleCounts.id, cmd.cycleCountId))
-  await eventBus.emit('warehouse.cycle_count_completed', {
-    type: 'warehouse.cycle_count_completed',
-    warehouseId: cmd.warehouseId, orgId: cmd.orgId,
-    cycleCountId: cmd.cycleCountId, occurredAt: now,
-  })
-}
-
-export interface CreateCycleCountCommand {
-  orgId: string; warehouseId: string
-  countType: 'FULL' | 'PARTIAL' | 'SPOT'; scheduledAt?: Date | undefined
-}
-export async function createCycleCountCommand(cmd: CreateCycleCountCommand, db: DbContext): Promise<{ id: string }> {
-  const id = generateId(); const now = new Date()
-  await db.insert(cycleCounts).values({
-    id, orgId: cmd.orgId, warehouseId: cmd.warehouseId,
-    countType: cmd.countType, scheduledAt: cmd.scheduledAt,
-    status: 'SCHEDULED', createdAt: now, updatedAt: now,
   })
   return { id }
 }

@@ -2,10 +2,53 @@ import { Elysia, t } from 'elysia'
 import { authMiddleware, withDbContext } from '@/shared/auth/middleware'
 import { UnauthorizedError } from '@/shared/errors'
 import { listCycleCountsQuery } from '@/modules/warehouse/application/queries/warehouse.queries'
-import { dispatchCargoCommand, conductCycleCountCommand, createCycleCountCommand } from '@/modules/warehouse/application/commands/warehouse.commands'
+import { dispatchCargoCommand } from '@/modules/warehouse/application/commands/warehouse.commands'
+import { completePutawayCommand, completePickingCommand } from '@/modules/warehouse/application/commands/warehouse-flow.commands'
+import { conductCycleCountCommand, createCycleCountCommand } from '@/modules/warehouse/application/commands/warehouse-cycle-count.commands'
 
 export const warehouseOperationsRoutes = new Elysia({ prefix: '/warehouse' })
   .use(authMiddleware)
+
+  // P3R-03 FIX: complete receiving with putaway into inventory
+  .post('/warehouses/:id/receivings/:receiveId/putaway', async ({ user, params, body }) => {
+    if (!user) throw new UnauthorizedError()
+    await withDbContext(user, (db) =>
+      completePutawayCommand({
+        orgId: user.orgId, warehouseId: params.id,
+        receivingId: params.receiveId, items: body.items,
+      }, db)
+    )
+    return { data: { message: 'Putaway completed.' } }
+  }, {
+    body: t.Object({
+      items: t.Array(t.Object({
+        sku:         t.String(),
+        quantity:    t.String(),
+        description: t.Optional(t.String()),
+        location_id: t.Optional(t.String()),
+        batch_number: t.Optional(t.String()),
+        expiry_date: t.Optional(t.String()),
+      })),
+    }),
+    detail: { tags: ['Warehouse'], summary: 'Complete putaway and add to inventory' },
+  })
+
+  // P3R-03 FIX: complete picking and decrement inventory
+  .post('/warehouses/:id/pickings/:pickingId/complete', async ({ user, params, body }) => {
+    if (!user) throw new UnauthorizedError()
+    await withDbContext(user, (db) =>
+      completePickingCommand({
+        orgId: user.orgId, warehouseId: params.id,
+        pickingId: params.pickingId, items: body.items,
+      }, db)
+    )
+    return { data: { message: 'Picking completed.' } }
+  }, {
+    body: t.Object({
+      items: t.Array(t.Object({ sku: t.String(), quantity: t.String() })),
+    }),
+    detail: { tags: ['Warehouse'], summary: 'Complete picking and decrement inventory' },
+  })
 
   .post('/warehouses/:id/dispatches', async ({ user, params, body }) => {
     if (!user) throw new UnauthorizedError()

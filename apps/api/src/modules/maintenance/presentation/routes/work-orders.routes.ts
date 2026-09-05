@@ -4,7 +4,7 @@ import { UnauthorizedError } from '@/shared/errors'
 import { parsePaginationQuery } from '@/shared/pagination/query-helpers'
 import { listWorkOrdersQuery, getWorkOrderQuery } from '@/modules/maintenance/application/queries/maintenance.queries'
 import { createWorkOrderCommand } from '@/modules/maintenance/application/commands/create-work-order.command'
-import { approveWorkOrderCommand, assignWorkOrderCommand, startWorkOrderCommand, completeWorkOrderCommand, closeWorkOrderCommand } from '@/modules/maintenance/application/commands/work-order-lifecycle.command'
+import { approveWorkOrderCommand, assignWorkOrderCommand, startWorkOrderCommand, completeWorkOrderCommand, closeWorkOrderCommand, emergencyStartWorkOrderCommand } from '@/modules/maintenance/application/commands/work-order-lifecycle.command'
 
 export const workOrdersRoutes = new Elysia({ prefix: '/maintenance' })
   .use(authMiddleware)
@@ -91,6 +91,20 @@ export const workOrdersRoutes = new Elysia({ prefix: '/maintenance' })
     )
     return { data: { message: 'Work order started.' } }
   }, { detail: { tags: ['Maintenance'], summary: 'Start work order' } })
+
+  // P3R-06 FIX: EMERGENCY work orders bypass approve/assign — start directly
+  .post('/work-orders/:id/emergency-start', async ({ user, params, body }) => {
+    if (!user) throw new UnauthorizedError()
+    await withDbContext(user, (db) =>
+      emergencyStartWorkOrderCommand({
+        workOrderId: params.id, orgId: user.orgId, assignedTo: body.assigned_to,
+      }, db)
+    )
+    return { data: { message: 'Emergency work order in progress.' } }
+  }, {
+    body: t.Object({ assigned_to: t.String() }),
+    detail: { tags: ['Maintenance'], summary: 'Emergency-start work order' },
+  })
 
   .post('/work-orders/:id/complete', async ({ user, params }) => {
     if (!user) throw new UnauthorizedError()

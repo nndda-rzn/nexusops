@@ -53,6 +53,7 @@ import { aviationHandlingRoutes } from '@/modules/aviation/presentation/routes/a
 import { planningRoutes } from '@/modules/planning/presentation/routes/optimization-jobs.routes'
 import { planningPlansRoutes } from '@/modules/planning/presentation/routes/plans-scenarios.routes'
 import { planningConstraintsRoutes } from '@/modules/planning/presentation/routes/planning-constraints.routes'
+import { planningAllocationRoutes } from '@/modules/planning/presentation/routes/resource-allocation.routes'
 
 export function createApp() {
   return new Elysia()
@@ -120,5 +121,5 @@ export function createApp() {
     .use(yardRoutes).use(yardContainerRoutes)
     .use(warehouseRoutes).use(warehouseOperationsRoutes)
     .use(aviationRoutes).use(aviationOperationsRoutes).use(aviationDocsRoutes).use(aviationHandlingRoutes)
-    .use(planningRoutes).use(planningPlansRoutes).use(planningConstraintsRoutes)
+    .use(planningRoutes).use(planningPlansRoutes).use(planningConstraintsRoutes).use(planningAllocationRoutes)
 }

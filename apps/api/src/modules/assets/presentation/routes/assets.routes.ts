@@ -5,7 +5,7 @@ import { parsePaginationQuery } from '@/shared/pagination/query-helpers'
 import { listAssetsQuery, getAssetQuery, listCategoriesQuery } from '@/modules/assets/application/queries/assets.queries'
 import { registerAssetCommand } from '@/modules/assets/application/commands/register-asset.command'
 import { updateAssetStatusCommand } from '@/modules/assets/application/commands/update-asset-status.command'
-import { createAssetCategoryCommand } from '@/modules/assets/application/commands/asset-operations.command'
+import { createAssetCategoryCommand } from '@/modules/assets/application/commands/asset-resources.commands'
 import type { AssetStatus } from '@/modules/assets/domain/entities/asset.entity'
 
 export const assetsRoutes = new Elysia({ prefix: '/assets' })

@@ -1,10 +1,19 @@
 import { findAssetByIdOrFail, saveAsset } from '@/modules/assets/infrastructure/repositories/asset.repository'
-import { operatorAssignments, inspections, categories, assetLocations } from '@/shared/database/schema/assets'
+import { operatorAssignments, inspections, lifecycleEvents } from '@/shared/database/schema/assets'
 import { eq, and } from 'drizzle-orm'
 import { generateId } from '@/shared/ids'
 import { eventBus } from '@/shared/events'
 import { DomainError } from '@/shared/errors'
 import type { DbContext } from '@/shared/database/client'
+
+async function recordLifecycleEvent(
+  orgId: string, assetId: string, eventType: string, description: string, actorId: string, db: DbContext
+): Promise<void> {
+  await db.insert(lifecycleEvents).values({
+    id: generateId(), orgId, assetId,
+    eventType, description, occurredAt: new Date(), actorId,
+  })
+}
 
 // ─── Operator Assignment ───
 
@@ -30,33 +39,42 @@ export async function assignAssetOperatorCommand(
   }
 
   const id = generateId()
+  const now = new Date()
   await db.insert(operatorAssignments).values({
     id, assetId: cmd.assetId,
     ownerOrgId: cmd.orgId, operatorOrgId: cmd.operatorOrgId,
     assignmentStart: cmd.assignmentStart, assignmentEnd: cmd.assignmentEnd,
     internalRate: cmd.internalRate, rateUnit: cmd.rateUnit,
     status: 'ACTIVE', approvedBy: cmd.approvedBy,
-    createdAt: new Date(),
+    createdAt: now,
   })
 
   asset.assignOperator(cmd.operatorOrgId)
   await saveAsset(asset, db)
+  await recordLifecycleEvent(cmd.orgId, cmd.assetId, 'OPERATOR_ASSIGNED',
+    `Assigned to operator '${cmd.operatorOrgId}'`, cmd.approvedBy, db)
 
   await eventBus.emit('asset.operator_assigned', {
     type: 'asset.operator_assigned',
     assetId: cmd.assetId, ownerOrgId: cmd.orgId,
     operatorOrgId: cmd.operatorOrgId, assignmentId: id,
-    occurredAt: new Date(), approvedBy: cmd.approvedBy,
+    occurredAt: now, approvedBy: cmd.approvedBy,
   })
 
   return { id }
 }
 
 export async function returnAssetOperatorCommand(
-  cmd: { assetId: string; orgId: string; assignmentId: string },
+  cmd: { assetId: string; orgId: string; assignmentId: string; actorId: string },
   db: DbContext
 ): Promise<void> {
   const asset = await findAssetByIdOrFail(cmd.assetId, cmd.orgId, db)
+  const prevOperator = asset.operatorOrgId
+  // P3R-04 FIX: guard — no empty-string fallback on event payload
+  if (!prevOperator) {
+    throw new DomainError('asset-not-assigned', 'Asset Not Assigned',
+      `Asset '${cmd.assetId}' has no operator to return.`, { asset_id: cmd.assetId })
+  }
   const now = new Date()
 
   await db.update(operatorAssignments)
@@ -66,14 +84,15 @@ export async function returnAssetOperatorCommand(
       eq(operatorAssignments.assetId, cmd.assetId),
     ))
 
-  const prevOperator = asset.operatorOrgId
   asset.returnOperator()
   await saveAsset(asset, db)
+  await recordLifecycleEvent(cmd.orgId, cmd.assetId, 'OPERATOR_RETURNED',
+    `Returned from operator '${prevOperator}'`, cmd.actorId, db)
 
   await eventBus.emit('asset.operator_returned', {
     type: 'asset.operator_returned',
     assetId: cmd.assetId, ownerOrgId: cmd.orgId,
-    operatorOrgId: prevOperator ?? '',
+    operatorOrgId: prevOperator,
     assignmentId: cmd.assignmentId,
     occurredAt: now,
   })
@@ -105,6 +124,8 @@ export async function recordInspectionCommand(
     nextInspectionDate: cmd.nextInspectionDate,
     createdAt: new Date(),
   })
+  await recordLifecycleEvent(cmd.orgId, cmd.assetId, 'INSPECTION_COMPLETED',
+    `Inspection ${cmd.inspectionType}: ${cmd.result}`, cmd.inspectorId ?? cmd.orgId, db)
 
   await eventBus.emit('asset.inspection_completed', {
     type: 'asset.inspection_completed',
@@ -123,52 +144,4 @@ export async function recordInspectionCommand(
   }
 
   return { id }
-}
-
-// ─── Asset Category ───
-
-export interface CreateAssetCategoryCommand {
-  orgId: string
-  code: string
-  name: string
-  parentCategoryId?: string | undefined
-  maintenanceIntervalDays?: number | undefined
-  inspectionRequired?: boolean | undefined
-}
-
-export async function createAssetCategoryCommand(
-  cmd: CreateAssetCategoryCommand,
-  db: DbContext
-): Promise<{ id: string }> {
-  const id = generateId()
-  await db.insert(categories).values({
-    id, orgId: cmd.orgId, code: cmd.code, name: cmd.name,
-    parentCategoryId: cmd.parentCategoryId,
-    maintenanceIntervalDays: cmd.maintenanceIntervalDays,
-    inspectionRequired: cmd.inspectionRequired ?? false,
-    createdAt: new Date(),
-  })
-  return { id }
-}
-
-// ─── Asset Location ───
-
-export interface UpdateAssetLocationCommand {
-  assetId: string
-  locationType: 'TERMINAL' | 'YARD' | 'WAREHOUSE' | 'WORKSHOP' | 'RAIL_DEPOT' | 'AIRPORT' | 'EXTERNAL'
-  locationId?: string | undefined
-  position?: string | undefined  // WKT
-}
-
-export async function updateAssetLocationCommand(
-  cmd: UpdateAssetLocationCommand,
-  db: DbContext
-): Promise<void> {
-  await db.insert(assetLocations).values({
-    id: generateId(), assetId: cmd.assetId,
-    locationType: cmd.locationType,
-    locationId: cmd.locationId,
-    position: cmd.position,
-    recordedAt: new Date(),
-  })
 }

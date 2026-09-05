@@ -169,6 +169,13 @@
       "when": 1788575794000,
       "tag": "0023_phase3_fk_resolution",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1788580560000,
+      "tag": "0024_phase3_residual",
+      "breakpoints": true
     }
   ]
 }

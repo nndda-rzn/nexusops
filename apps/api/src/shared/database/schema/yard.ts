@@ -83,7 +83,7 @@ export const yardMovements = yardSchema.table('movements', {
   orgId: text('org_id').notNull(),
   containerId: text('container_id').notNull(),
   fromSlotId: text('from_slot_id'),     // nullable — inbound from vessel/gate
-  toSlotId: text('to_slot_id').notNull().references(() => slots.id),
+  toSlotId: text('to_slot_id'),         // nullable — OUTBOUND movement has no destination (P3R-02)
   movementType: yardMovementTypeEnum('movement_type').notNull(),
   equipmentId: text('equipment_id'),    // FK to assets.assets (nullable)
   operatorId: text('operator_id'),      // FK to workforce.employees (nullable)

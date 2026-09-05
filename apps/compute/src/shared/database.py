@@ -1,6 +1,7 @@
 import psycopg
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
+
 from src.shared.config import settings
 
 _pool: AsyncConnectionPool | None = None

@@ -1,6 +1,8 @@
-import structlog
 import logging
 import sys
+
+import structlog
+
 from src.shared.config import settings
 
 

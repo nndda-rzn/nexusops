@@ -2,6 +2,10 @@
 
 CREATE SCHEMA IF NOT EXISTS "planning";
 --> statement-breakpoint
+-- 'shared' schema is not created by any earlier migration (only by infra init);
+-- ensure it exists so outbox tables below can be created on a fresh DB.
+CREATE SCHEMA IF NOT EXISTS "shared";
+--> statement-breakpoint
 
 -- Enums
 CREATE TYPE "planning"."optimization_job_type" AS ENUM(

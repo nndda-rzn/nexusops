@@ -23,6 +23,13 @@ export const OPTIMIZATION_JOB_TYPES: OptimizationJobType[] = [
   'NETWORK_ANALYSIS', 'CRITICAL_PATH', 'DELAY_PROPAGATION',
 ]
 
+// Job types with a registered solver handler in the compute worker registry
+// (apps/compute/src/workers/registry.py). Requesting any other type creates a
+// job that no worker can process — rejected at the API boundary instead.
+export const SUPPORTED_JOB_TYPES: OptimizationJobType[] = [
+  'YARD_OPTIMIZATION', 'NETWORK_ANALYSIS', 'CRITICAL_PATH', 'DELAY_PROPAGATION',
+]
+
 export interface OptimizationJobProps {
   id: string
   orgId: string

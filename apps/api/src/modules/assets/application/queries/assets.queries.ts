@@ -1,5 +1,5 @@
 import { assets, categories, inspections } from '@/shared/database/schema/assets'
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, or, and, sql } from 'drizzle-orm'
 import { normalizePagination, toOffset, paginate } from '@/shared/pagination'
 import { AssetNotFoundError } from '@/modules/assets/domain/errors/assets.errors'
 import type { DbContext } from '@/shared/database/client'
@@ -10,7 +10,8 @@ export async function listAssetsQuery(
 ) {
   const { page, limit } = normalizePagination(params ?? {})
   const offset = toOffset(page, limit)
-  const conditions = [eq(assets.orgId, orgId)]
+  // P3R-04 FIX: operator org can see assets it operates (matches RLS select policy)
+  const conditions = [or(eq(assets.orgId, orgId), eq(assets.operatorOrgId, orgId))]
   if (params?.status) conditions.push(
     eq(assets.status, params.status as 'ACTIVE' | 'IDLE' | 'ASSIGNED_OUT' | 'MAINTENANCE' | 'BREAKDOWN' | 'INSPECTION' | 'DECOMMISSIONED' | 'DISPOSED')
   )
@@ -24,8 +25,12 @@ export async function listAssetsQuery(
 }
 
 export async function getAssetQuery(id: string, orgId: string, db: DbContext) {
+  // P3R-04 FIX: operator org can read the asset it operates
   const [row] = await db.select().from(assets)
-    .where(and(eq(assets.id, id), eq(assets.orgId, orgId))).limit(1)
+    .where(and(
+      eq(assets.id, id),
+      or(eq(assets.orgId, orgId), eq(assets.operatorOrgId, orgId)),
+    )).limit(1)
   if (!row) throw new AssetNotFoundError(id)
   return row
 }

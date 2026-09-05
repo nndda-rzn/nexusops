@@ -38,7 +38,8 @@ export const assetOperationsRoutes = new Elysia({ prefix: '/assets' })
     if (!user) throw new UnauthorizedError()
     await withDbContext(user, (db) =>
       returnAssetOperatorCommand({
-        assetId: params.id, orgId: user.orgId, assignmentId: body.assignment_id,
+        assetId: params.id, orgId: user.orgId,
+        assignmentId: body.assignment_id, actorId: user.id,
       }, db)
     )
     return { data: { message: 'Asset returned to owner.' } }

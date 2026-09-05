@@ -1,4 +1,4 @@
-import { insertFlight } from '@/modules/aviation/infrastructure/repositories/flight.repository'
+import { insertFlight, findFlightByIdOrFail } from '@/modules/aviation/infrastructure/repositories/flight.repository'
 import { aircraft, airwayBills } from '@/shared/database/schema/aviation'
 import { Flight } from '@/modules/aviation/domain/entities/flight.entity'
 import { eventBus } from '@/shared/events'
@@ -46,7 +46,7 @@ export async function scheduleFlightCommand(cmd: ScheduleFlightCommand, db: DbCo
 
 // ─── AWB ───
 export interface IssueAwbCommand {
-  orgId: string; awbNumber: string; flightId?: string | undefined
+  orgId: string; awbNumber: string; flightId: string
   grossWeightKg: string; pieces: number
   originAirportId?: string | undefined; destinationAirportId?: string | undefined
   isDangerousGoods?: boolean | undefined; dgClass?: string | undefined
@@ -54,6 +54,8 @@ export interface IssueAwbCommand {
 }
 export async function issueAwbCommand(cmd: IssueAwbCommand, db: DbContext): Promise<{ id: string }> {
   const id = generateId(); const now = new Date()
+  // P3R-05 FIX: verify the referenced flight exists before issuing
+  await findFlightByIdOrFail(cmd.flightId, cmd.orgId, db)
   await db.insert(airwayBills).values({
     id, orgId: cmd.orgId, awbNumber: cmd.awbNumber, flightId: cmd.flightId,
     grossWeightKg: cmd.grossWeightKg, pieces: cmd.pieces,
@@ -67,7 +69,7 @@ export async function issueAwbCommand(cmd: IssueAwbCommand, db: DbContext): Prom
   })
   await eventBus.emit('aviation.cargo_accepted', {
     type: 'aviation.cargo_accepted',
-    flightId: cmd.flightId ?? '', orgId: cmd.orgId,
+    flightId: cmd.flightId, orgId: cmd.orgId,
     awbId: id, occurredAt: now,
   })
   return { id }

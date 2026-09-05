@@ -1,6 +1,7 @@
 import { findFlightByIdOrFail, saveFlight } from '@/modules/aviation/infrastructure/repositories/flight.repository'
 import { aircraft, cargoManifests, loadPlans, airportSlots, aviationCrewAssignments } from '@/shared/database/schema/aviation'
 import { eq } from 'drizzle-orm'
+import { generateId } from '@/shared/ids'
 import { eventBus } from '@/shared/events'
 import type { FlightStatus } from '@/modules/aviation/domain/entities/flight.entity'
 import type { DbContext } from '@/shared/database/client'
@@ -12,6 +13,21 @@ export async function transitionFlightCommand(
   const flight = await findFlightByIdOrFail(cmd.flightId, cmd.orgId, db)
   flight.transition(cmd.to)
   await saveFlight(flight, db)
+}
+
+// P3R-05 FIX: dedicated delay command that emits the domain event
+export async function delayFlightCommand(
+  cmd: { flightId: string; orgId: string },
+  db: DbContext
+): Promise<void> {
+  const flight = await findFlightByIdOrFail(cmd.flightId, cmd.orgId, db)
+  flight.transition('DELAYED')
+  await saveFlight(flight, db)
+  await eventBus.emit('aviation.flight_delayed', {
+    type: 'aviation.flight_delayed',
+    flightId: cmd.flightId, orgId: cmd.orgId,
+    occurredAt: new Date(),
+  })
 }
 
 export async function departFlightCommand(
@@ -98,7 +114,6 @@ export interface AssignAviationCrewCommand {
   role: 'CAPTAIN' | 'FIRST_OFFICER' | 'LOADMASTER'
 }
 export async function assignAviationCrewCommand(cmd: AssignAviationCrewCommand, db: DbContext): Promise<{ id: string }> {
-  const { generateId } = await import('@/shared/ids')
   const id = generateId()
   await db.insert(aviationCrewAssignments).values({
     id, orgId: cmd.orgId, flightId: cmd.flightId,

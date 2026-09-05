@@ -119,8 +119,8 @@ export const aviationRoutes = new Elysia({ prefix: '/aviation' })
     const result = await withDbContext(user, (db) =>
       issueAwbCommand({
         orgId: user.orgId, awbNumber: body.awb_number,
+        flightId: body.flight_id,
         grossWeightKg: body.gross_weight_kg, pieces: body.pieces,
-        ...(body.flight_id ? { flightId: body.flight_id } : {}),
         ...(body.origin_airport_id ? { originAirportId: body.origin_airport_id } : {}),
         ...(body.destination_airport_id ? { destinationAirportId: body.destination_airport_id } : {}),
         ...(body.is_dangerous_goods !== undefined ? { isDangerousGoods: body.is_dangerous_goods } : {}),
@@ -133,9 +133,9 @@ export const aviationRoutes = new Elysia({ prefix: '/aviation' })
   }, {
     body: t.Object({
       awb_number:             t.String(),
+      flight_id:              t.String(),
       gross_weight_kg:        t.String(),
       pieces:                 t.Number({ minimum: 1 }),
-      flight_id:              t.Optional(t.String()),
       origin_airport_id:      t.Optional(t.String()),
       destination_airport_id: t.Optional(t.String()),
       is_dangerous_goods:     t.Optional(t.Boolean()),

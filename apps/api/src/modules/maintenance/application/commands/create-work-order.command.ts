@@ -22,7 +22,7 @@ export async function createWorkOrderCommand(
   db: DbContext
 ): Promise<{ id: string; workOrderNumber: string }> {
   const id = generateId()
-  const workOrderNumber = `WO-${Date.now()}`
+  const workOrderNumber = `WO-${generateId().slice(0, 12).toUpperCase()}`
   const now = new Date()
 
   const wo = WorkOrder.fromSnapshot({

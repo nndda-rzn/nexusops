@@ -1,7 +1,7 @@
 import { Elysia, t } from 'elysia'
 import { authMiddleware, withDbContext } from '@/shared/auth/middleware'
 import { UnauthorizedError } from '@/shared/errors'
-import { transitionFlightCommand, departFlightCommand, arriveFlightCommand, confirmSlotCommand, closeManifestCommand, approveLoadPlanCommand, assignAviationCrewCommand, declareAogCommand } from '@/modules/aviation/application/commands/aviation-lifecycle.commands'
+import { transitionFlightCommand, delayFlightCommand, departFlightCommand, arriveFlightCommand, confirmSlotCommand, closeManifestCommand, approveLoadPlanCommand, assignAviationCrewCommand, declareAogCommand } from '@/modules/aviation/application/commands/aviation-lifecycle.commands'
 
 export const aviationOperationsRoutes = new Elysia({ prefix: '/aviation' })
   .use(authMiddleware)
@@ -81,7 +81,7 @@ export const aviationOperationsRoutes = new Elysia({ prefix: '/aviation' })
   .post('/flights/:id/delay', async ({ user, params }) => {
     if (!user) throw new UnauthorizedError()
     await withDbContext(user, (db) =>
-      transitionFlightCommand({ flightId: params.id, orgId: user.orgId, to: 'DELAYED' }, db)
+      delayFlightCommand({ flightId: params.id, orgId: user.orgId }, db)
     )
     return { data: { message: 'Flight delayed.' } }
   }, { detail: { tags: ['Aviation'], summary: 'Mark flight as delayed' } })

@@ -35,13 +35,3 @@ export interface WorkforceAssignmentCompletedEvent {
   orgId: string
   occurredAt: Date
 }
-
-export interface CertificationExpiringEvent {
-  type: 'workforce.certification_expiring'
-  certificationId: string
-  orgId: string
-  employeeId: string
-  certificationName: string
-  expiresAt: string
-  occurredAt: Date
-}

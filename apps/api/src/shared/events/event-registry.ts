@@ -17,9 +17,9 @@ import type { TrainScheduledEvent, TrainDepartedEvent, TrainArrivedEvent, TrainD
 import type { TripDispatchedEvent, TripDepartedEvent, TripCheckpointReachedEvent, TripDelayedEvent, TripArrivedEvent, TripCompletedEvent, VehicleBreakdownEvent } from '@/modules/road/domain/events/road.events'
 import type { ShipmentLegAddedEvent, ShipmentLegStatusUpdatedEvent, ShipmentExceptionResolvedEvent } from '@/modules/shipments/domain/events/shipment.events'
 import type { TerminalCreatedEvent, TerminalGateCreatedEvent, TerminalGateStatusUpdatedEvent, TerminalBerthCreatedEvent, TerminalCraneCreatedEvent } from '@/modules/terminal/domain/events/terminal.events'
-import type { EmployeeRegisteredEvent, EmployeeStatusChangedEvent, WorkforceAssignedEvent, WorkforceAssignmentCompletedEvent, CertificationExpiringEvent } from '@/modules/workforce/domain/events/workforce.events'
+import type { EmployeeRegisteredEvent, EmployeeStatusChangedEvent, WorkforceAssignedEvent, WorkforceAssignmentCompletedEvent } from '@/modules/workforce/domain/events/workforce.events'
 import type { AssetRegisteredEvent, AssetStatusChangedEvent, AssetOperatorAssignedEvent, AssetOperatorReturnedEvent, AssetInspectionCompletedEvent, AssetMaintenanceRequiredEvent } from '@/modules/assets/domain/events/assets.events'
-import type { MaintenanceWorkOrderCreatedEvent, MaintenanceWorkOrderStartedEvent, MaintenanceWorkOrderCompletedEvent, MaintenanceWorkOrderClosedEvent, MaintenanceFailureReportedEvent, MaintenancePartsRequestedEvent } from '@/modules/maintenance/domain/events/maintenance.events'
+import type { MaintenanceWorkOrderCreatedEvent, MaintenanceWorkOrderStartedEvent, MaintenanceWorkOrderCompletedEvent, MaintenanceWorkOrderClosedEvent, MaintenanceFailureReportedEvent } from '@/modules/maintenance/domain/events/maintenance.events'
 import type { YardContainerPlacedEvent, YardContainerMovedEvent, YardContainerRemovedEvent, YardSlotReservedEvent } from '@/modules/yard/domain/events/yard.events'
 import type { WarehouseReceivedEvent, WarehousePutawayCompletedEvent, WarehousePickingStartedEvent, WarehousePickingCompletedEvent, WarehouseDispatchedEvent, WarehouseInventoryAdjustedEvent, WarehouseCycleCountCompletedEvent } from '@/modules/warehouse/domain/events/warehouse.events'
 import type { AviationFlightScheduledEvent, AviationSlotConfirmedEvent, AviationManifestClosedEvent, AviationLoadPlanApprovedEvent, AviationFlightDepartedEvent, AviationFlightArrivedEvent, AviationFlightDelayedEvent, AviationAogDeclaredEvent, AviationCargoAcceptedEvent } from '@/modules/aviation/domain/events/aviation.events'
@@ -53,12 +53,12 @@ export type EventMap = {
   'intermodal.handover_requested': HandoverRequestedEvent; 'intermodal.handover_accepted': HandoverAcceptedEvent; 'intermodal.handover_rejected': HandoverRejectedEvent
   'intermodal.handover_completed': HandoverCompletedEvent; 'intermodal.handover_cancelled': HandoverCancelledEvent
   'workforce.employee_registered': EmployeeRegisteredEvent; 'workforce.employee_status_changed': EmployeeStatusChangedEvent
-  'workforce.assigned': WorkforceAssignedEvent; 'workforce.assignment_completed': WorkforceAssignmentCompletedEvent; 'workforce.certification_expiring': CertificationExpiringEvent
+  'workforce.assigned': WorkforceAssignedEvent; 'workforce.assignment_completed': WorkforceAssignmentCompletedEvent
   'asset.registered': AssetRegisteredEvent; 'asset.status_changed': AssetStatusChangedEvent; 'asset.operator_assigned': AssetOperatorAssignedEvent
   'asset.operator_returned': AssetOperatorReturnedEvent; 'asset.inspection_completed': AssetInspectionCompletedEvent; 'asset.maintenance_required': AssetMaintenanceRequiredEvent
   'maintenance.workorder_created': MaintenanceWorkOrderCreatedEvent; 'maintenance.workorder_started': MaintenanceWorkOrderStartedEvent
   'maintenance.workorder_completed': MaintenanceWorkOrderCompletedEvent; 'maintenance.workorder_closed': MaintenanceWorkOrderClosedEvent
-  'maintenance.failure_reported': MaintenanceFailureReportedEvent; 'maintenance.parts_requested': MaintenancePartsRequestedEvent
+  'maintenance.failure_reported': MaintenanceFailureReportedEvent
   'yard.container_placed': YardContainerPlacedEvent; 'yard.container_moved': YardContainerMovedEvent
   'yard.container_removed': YardContainerRemovedEvent; 'yard.slot_reserved': YardSlotReservedEvent
   'warehouse.received': WarehouseReceivedEvent; 'warehouse.putaway_completed': WarehousePutawayCompletedEvent

@@ -40,10 +40,3 @@ export interface MaintenanceFailureReportedEvent {
   severity: string
   occurredAt: Date
 }
-
-export interface MaintenancePartsRequestedEvent {
-  type: 'maintenance.parts_requested'
-  workOrderId: string
-  orgId: string
-  occurredAt: Date
-}

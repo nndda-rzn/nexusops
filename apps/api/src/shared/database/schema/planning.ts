@@ -33,6 +33,9 @@ export const scenarioStatusEnum = planningSchema.enum('scenario_status', [
 export const constraintTypeEnum = planningSchema.enum('constraint_type', [
   'HARD', 'SOFT',
 ])
+export const resourceAllocationStatusEnum = planningSchema.enum('resource_allocation_status', [
+  'PLANNED', 'CONFIRMED', 'IN_USE', 'RELEASED',
+])
 
 // ─── Tables ───
 
@@ -167,4 +170,33 @@ export const constraints = planningSchema.table('constraints', {
 }, (t) => [
   index('constraints_org_idx').on(t.orgId),
   index('constraints_org_type_idx').on(t.orgId, t.planType),
+])
+
+// ─────────────────────────────────────────
+// Resource Allocations — cross-domain resource reservations linked to a plan.
+// Each allocation reserves a resource (berth/crane/workforce/vehicle/slot)
+// for an allocated target over a time interval.
+// ─────────────────────────────────────────
+
+export const resourceAllocations = planningSchema.table('resource_allocations', {
+  id: text('id').primaryKey().$defaultFn(() => ulid()),
+  orgId: text('org_id').notNull(),
+  planId: text('plan_id').references(() => plans.id),
+  resourceType: text('resource_type').notNull(),
+  resourceId: text('resource_id').notNull(),
+  allocatedToType: text('allocated_to_type').notNull(),
+  allocatedToId: text('allocated_to_id').notNull(),
+  startTime: timestamp('start_time', { withTimezone: true }).notNull(),
+  endTime: timestamp('end_time', { withTimezone: true }).notNull(),
+  quantity: integer('quantity').notNull().default(1),
+  status: resourceAllocationStatusEnum('status').notNull().default('PLANNED'),
+  version: integer('version').notNull().default(1),
+  createdBy: text('created_by').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('resource_allocations_org_idx').on(t.orgId),
+  index('resource_allocations_plan_idx').on(t.planId),
+  index('resource_allocations_resource_idx').on(t.resourceType, t.resourceId),
+  index('resource_allocations_target_idx').on(t.allocatedToType, t.allocatedToId),
 ])

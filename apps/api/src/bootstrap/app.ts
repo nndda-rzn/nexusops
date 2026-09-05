@@ -42,6 +42,7 @@ import { assetOperationsRoutes } from '@/modules/assets/presentation/routes/asse
 import { workOrdersRoutes } from '@/modules/maintenance/presentation/routes/work-orders.routes'
 import { maintenanceResourcesRoutes } from '@/modules/maintenance/presentation/routes/maintenance-resources.routes'
 import { yardRoutes } from '@/modules/yard/presentation/routes/yard.routes'
+import { yardContainerRoutes } from '@/modules/yard/presentation/routes/yard-container.routes'
 import { warehouseRoutes } from '@/modules/warehouse/presentation/routes/warehouse.routes'
 import { warehouseOperationsRoutes } from '@/modules/warehouse/presentation/routes/warehouse-operations.routes'
 import { aviationRoutes } from '@/modules/aviation/presentation/routes/aviation.routes'
@@ -112,7 +113,7 @@ export function createApp() {
     .use(employeesRoutes).use(employeeProfileRoutes).use(workforceResourcesRoutes)
     .use(assetsRoutes).use(assetOperationsRoutes)
     .use(workOrdersRoutes).use(maintenanceResourcesRoutes)
-    .use(yardRoutes)
+    .use(yardRoutes).use(yardContainerRoutes)
     .use(warehouseRoutes).use(warehouseOperationsRoutes)
     .use(aviationRoutes).use(aviationOperationsRoutes).use(aviationDocsRoutes).use(aviationHandlingRoutes)
 }

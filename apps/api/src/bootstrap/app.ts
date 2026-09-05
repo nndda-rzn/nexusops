@@ -50,6 +50,7 @@ import { aviationRoutes } from '@/modules/aviation/presentation/routes/aviation.
 import { aviationOperationsRoutes } from '@/modules/aviation/presentation/routes/aviation-operations.routes'
 import { aviationDocsRoutes } from '@/modules/aviation/presentation/routes/aviation-docs.routes'
 import { aviationHandlingRoutes } from '@/modules/aviation/presentation/routes/aviation-handling.routes'
+import { planningRoutes } from '@/modules/planning/presentation/routes/optimization-jobs.routes'
 
 export function createApp() {
   return new Elysia()
@@ -74,7 +75,7 @@ export function createApp() {
           { name: 'Assets' }, { name: 'Maintenance' }, { name: 'Workforce' },
           { name: 'Planning' }, { name: 'Billing' }, { name: 'Analytics' },
           { name: 'Intermodal' }, { name: 'Group' }, { name: 'Shared Master' },
-          { name: 'Aviation' },
+          { name: 'Aviation' }, { name: 'Planning' },
         ],
       },
       path: '/swagger',
@@ -117,4 +118,5 @@ export function createApp() {
     .use(yardRoutes).use(yardContainerRoutes)
     .use(warehouseRoutes).use(warehouseOperationsRoutes)
     .use(aviationRoutes).use(aviationOperationsRoutes).use(aviationDocsRoutes).use(aviationHandlingRoutes)
+    .use(planningRoutes)
 }

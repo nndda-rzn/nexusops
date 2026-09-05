@@ -23,6 +23,7 @@ import type { MaintenanceWorkOrderCreatedEvent, MaintenanceWorkOrderStartedEvent
 import type { YardContainerPlacedEvent, YardContainerMovedEvent, YardContainerRemovedEvent, YardSlotReservedEvent } from '@/modules/yard/domain/events/yard.events'
 import type { WarehouseReceivedEvent, WarehousePutawayCompletedEvent, WarehousePickingStartedEvent, WarehousePickingCompletedEvent, WarehouseDispatchedEvent, WarehouseInventoryAdjustedEvent, WarehouseCycleCountCompletedEvent } from '@/modules/warehouse/domain/events/warehouse.events'
 import type { AviationFlightScheduledEvent, AviationSlotConfirmedEvent, AviationManifestClosedEvent, AviationLoadPlanApprovedEvent, AviationFlightDepartedEvent, AviationFlightArrivedEvent, AviationFlightDelayedEvent, AviationAogDeclaredEvent, AviationCargoAcceptedEvent } from '@/modules/aviation/domain/events/aviation.events'
+import type { OptimizationRequestedEvent, OptimizationJobStatusChangedEvent } from '@/modules/planning/domain/events/planning.events'
 import type { HandoverRequestedEvent, HandoverAcceptedEvent, HandoverRejectedEvent, HandoverCompletedEvent, HandoverCancelledEvent, ShipmentCreatedEvent, ShipmentStatusChangedEvent, ShipmentMilestoneReachedEvent, ShipmentExceptionRaisedEvent, ContainerAnnouncedEvent, ContainerMovedEvent, ContainerGateInEvent, ContainerGateOutEvent, ContainerDischargedEvent, ContainerHeldEvent, ContainerReleasedEvent, VehiclePositionUpdatedEvent } from '@/shared/events/event-types'
 
 export type EventMap = {
@@ -70,4 +71,6 @@ export type EventMap = {
   'aviation.flight_departed': AviationFlightDepartedEvent; 'aviation.flight_arrived': AviationFlightArrivedEvent
   'aviation.flight_delayed': AviationFlightDelayedEvent; 'aviation.aog_declared': AviationAogDeclaredEvent
   'aviation.cargo_accepted': AviationCargoAcceptedEvent
+  'planning.optimization_requested': OptimizationRequestedEvent
+  'planning.optimization_job_status_changed': OptimizationJobStatusChangedEvent
 }

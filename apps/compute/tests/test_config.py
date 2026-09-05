@@ -1,4 +1,3 @@
-import pytest
 from src.shared.config import settings
 
 

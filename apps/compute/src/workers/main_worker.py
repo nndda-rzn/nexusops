@@ -8,22 +8,15 @@ from src.shared.logging import logger, setup_logging
 from src.shared.redis_client import close_redis, get_redis
 from src.workers import job_repository
 from src.workers.job_processor import process_message
+from src.workers.registry import STREAM_SUFFIX_TO_TYPE
 
-# Stream names — must match API RedisKeys.jobStream(jobType) with the
-# shared keyPrefix. API publishes to "jobs:<job_type_lowercase>".
+# Stream names — must match API RedisKeys.jobStream(jobType) with the shared
+# keyPrefix: API publishes to "jobs:<job_type_lowercase>".
+# Only streams with a registered handler are consumed (registry is the source
+# of truth). Unimplemented job types are rejected by the API job request when
+# the worker registry has no handler — see registry.STREAM_SUFFIX_TO_TYPE.
 STREAM_PREFIX = f"{settings.redis_stream_prefix}:"
-STREAMS = {
-    "yard_optimization": "YARD_OPTIMIZATION",
-    "berth_scheduling": "BERTH_SCHEDULING",
-    "crane_scheduling": "CRANE_SCHEDULING",
-    "workforce_scheduling": "WORKFORCE_SCHEDULING",
-    "route_optimization": "ROUTE_OPTIMIZATION",
-    "train_scheduling": "TRAIN_SCHEDULING",
-    "network_analysis": "NETWORK_ANALYSIS",
-    "critical_path": "CRITICAL_PATH",
-    "delay_propagation": "DELAY_PROPAGATION",
-    "noop": "NOOP",
-}
+STREAMS: list[str] = [f"{STREAM_PREFIX}{suffix}" for suffix in STREAM_SUFFIX_TO_TYPE]
 
 
 class RedisStreamWorker:
@@ -134,11 +127,8 @@ class RedisStreamWorker:
 
 
 async def build_workers() -> list[RedisStreamWorker]:
-    """One worker per job-type stream so pools can scale per solver."""
-    workers = []
-    for stream_suffix in STREAMS:
-        workers.append(RedisStreamWorker(stream=f"{STREAM_PREFIX}{stream_suffix}"))
-    return workers
+    """One worker per registered job-type stream so pools can scale per solver."""
+    return [RedisStreamWorker(stream=f"{STREAM_PREFIX}{suffix}") for suffix in STREAM_SUFFIX_TO_TYPE]
 
 
 async def main() -> None:

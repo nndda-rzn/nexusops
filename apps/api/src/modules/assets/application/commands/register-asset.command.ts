@@ -1,8 +1,11 @@
 import { insertAsset } from '@/modules/assets/infrastructure/repositories/asset.repository'
 import { Asset } from '@/modules/assets/domain/entities/asset.entity'
 import type { AssetCondition } from '@/modules/assets/domain/entities/asset.entity'
+import { categories } from '@/shared/database/schema/assets'
+import { eq, and } from 'drizzle-orm'
 import { eventBus } from '@/shared/events'
 import { generateId } from '@/shared/ids'
+import { AssetCategoryNotFoundError } from '@/modules/assets/domain/errors/assets.errors'
 import type { DbContext } from '@/shared/database/client'
 
 export interface RegisterAssetCommand {
@@ -26,6 +29,14 @@ export async function registerAssetCommand(
 ): Promise<{ id: string }> {
   const id = generateId()
   const now = new Date()
+
+  // P3R-06 FIX: validate referenced category belongs to the org
+  if (cmd.categoryId) {
+    const [cat] = await db.select({ id: categories.id }).from(categories)
+      .where(and(eq(categories.id, cmd.categoryId), eq(categories.orgId, cmd.orgId)))
+      .limit(1)
+    if (!cat) throw new AssetCategoryNotFoundError(cmd.categoryId)
+  }
 
   const asset = Asset.fromSnapshot({
     id, orgId: cmd.orgId, assetNumber: cmd.assetNumber,

@@ -1,4 +1,4 @@
-import { employees, crews, assignments, certifications, availability } from '@/shared/database/schema/workforce'
+import { employees, crews, crewMembers, assignments, certifications, availability } from '@/shared/database/schema/workforce'
 import { eq, and, sql } from 'drizzle-orm'
 import { normalizePagination, toOffset, paginate } from '@/shared/pagination'
 import { EmployeeNotFoundError } from '@/modules/workforce/domain/errors/workforce.errors'
@@ -75,4 +75,9 @@ export async function listCertificationsQuery(
   return db.select().from(certifications)
     .where(and(eq(certifications.employeeId, employeeId), eq(certifications.orgId, orgId)))
     .orderBy(certifications.issuedAt)
+}
+
+// P3R-06 FIX: crew member read — members were write-only before
+export async function listCrewMembersQuery(crewId: string, db: DbContext) {
+  return db.select().from(crewMembers).where(eq(crewMembers.crewId, crewId))
 }

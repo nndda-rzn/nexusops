@@ -37,6 +37,7 @@ import { tripsRoutes } from '@/modules/road/presentation/routes/trips.routes'
 import { employeesRoutes } from '@/modules/workforce/presentation/routes/employees.routes'
 import { employeeProfileRoutes } from '@/modules/workforce/presentation/routes/employee-profile.routes'
 import { workforceResourcesRoutes } from '@/modules/workforce/presentation/routes/workforce-resources.routes'
+import { workforceAssignmentsRoutes } from '@/modules/workforce/presentation/routes/workforce-assignments.routes'
 import { assetsRoutes } from '@/modules/assets/presentation/routes/assets.routes'
 import { assetOperationsRoutes } from '@/modules/assets/presentation/routes/asset-operations.routes'
 import { workOrdersRoutes } from '@/modules/maintenance/presentation/routes/work-orders.routes'
@@ -110,7 +111,7 @@ export function createApp() {
     .use(portCallsRoutes).use(portCallLifecycleRoutes)
     .use(railResourcesRoutes).use(trainsRoutes).use(trainLifecycleRoutes)
     .use(vehiclesRoutes).use(tripsRoutes)
-    .use(employeesRoutes).use(employeeProfileRoutes).use(workforceResourcesRoutes)
+    .use(employeesRoutes).use(employeeProfileRoutes).use(workforceResourcesRoutes).use(workforceAssignmentsRoutes)
     .use(assetsRoutes).use(assetOperationsRoutes)
     .use(workOrdersRoutes).use(maintenanceResourcesRoutes)
     .use(yardRoutes).use(yardContainerRoutes)

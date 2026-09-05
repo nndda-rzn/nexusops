@@ -1,5 +1,8 @@
-import { shifts, crews, crewMembers, qualifications, certifications, availability } from '@/shared/database/schema/workforce'
+import { employees, shifts, shiftSchedules, crews, crewMembers, qualifications, certifications, availability } from '@/shared/database/schema/workforce'
 import { generateId } from '@/shared/ids'
+import { eq } from 'drizzle-orm'
+import { DomainNotFoundError } from '@/shared/errors'
+import { CrewNotFoundError, EmployeeNotFoundError } from '@/modules/workforce/domain/errors/workforce.errors'
 import type { DbContext } from '@/shared/database/client'
 
 // ─── Shift ───
@@ -23,6 +26,29 @@ export async function createShiftCommand(cmd: CreateShiftCommand, db: DbContext)
     breakDurationMinutes: cmd.breakDurationMinutes ?? 0,
     shiftType: cmd.shiftType,
     createdAt: new Date(),
+  })
+  return { id }
+}
+
+// ─── Shift Schedule (roster) — P3R-06 FIX: was orphaned table ───
+
+export interface ScheduleShiftCommand {
+  orgId: string
+  employeeId: string
+  shiftId: string
+  date: string
+}
+
+export async function scheduleShiftCommand(cmd: ScheduleShiftCommand, db: DbContext): Promise<{ id: string }> {
+  const [emp] = await db.select({ id: employees.id }).from(employees)
+    .where(eq(employees.id, cmd.employeeId)).limit(1)
+  if (!emp) throw new DomainNotFoundError('employee-not-found', 'Employee Not Found',
+    `Employee '${cmd.employeeId}' does not exist.`, { employee_id: cmd.employeeId })
+  const id = generateId()
+  await db.insert(shiftSchedules).values({
+    id, orgId: cmd.orgId, employeeId: cmd.employeeId,
+    shiftId: cmd.shiftId, date: cmd.date,
+    status: 'SCHEDULED', createdAt: new Date(),
   })
   return { id }
 }
@@ -56,6 +82,13 @@ export interface AddCrewMemberCommand {
 }
 
 export async function addCrewMemberCommand(cmd: AddCrewMemberCommand, db: DbContext): Promise<{ id: string }> {
+  // P3R-06 FIX: validate crew + employee exist before inserting member
+  const [crew] = await db.select({ id: crews.id }).from(crews)
+    .where(eq(crews.id, cmd.crewId)).limit(1)
+  if (!crew) throw new CrewNotFoundError(cmd.crewId)
+  const [emp] = await db.select({ id: employees.id }).from(employees)
+    .where(eq(employees.id, cmd.employeeId)).limit(1)
+  if (!emp) throw new EmployeeNotFoundError(cmd.employeeId)
   const id = generateId()
   await db.insert(crewMembers).values({
     id, crewId: cmd.crewId, employeeId: cmd.employeeId,

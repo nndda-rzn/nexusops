@@ -7,10 +7,18 @@ export interface AssignWorkOrderCommand { workOrderId: string; orgId: string; as
 export interface StartWorkOrderCommand { workOrderId: string; orgId: string }
 export interface CompleteWorkOrderCommand { workOrderId: string; orgId: string }
 export interface CloseWorkOrderCommand { workOrderId: string; orgId: string }
+export interface EmergencyStartWorkOrderCommand { workOrderId: string; orgId: string; assignedTo: string }
 
 export async function approveWorkOrderCommand(cmd: ApproveWorkOrderCommand, db: DbContext): Promise<void> {
   const wo = await findWorkOrderByIdOrFail(cmd.workOrderId, cmd.orgId, db)
   wo.approve(cmd.approvedBy)
+  await saveWorkOrder(wo, db)
+}
+
+// P3R-06 FIX: EMERGENCY work orders skip approve/assign — start directly
+export async function emergencyStartWorkOrderCommand(cmd: EmergencyStartWorkOrderCommand, db: DbContext): Promise<void> {
+  const wo = await findWorkOrderByIdOrFail(cmd.workOrderId, cmd.orgId, db)
+  wo.emergencyStart(cmd.assignedTo)
   await saveWorkOrder(wo, db)
 }
 

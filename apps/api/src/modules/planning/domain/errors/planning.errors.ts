@@ -22,3 +22,23 @@ export class OptimizationJobNotRetryableError extends DomainError {
       { job_id: id, status })
   }
 }
+
+export class ScenarioNotFoundError extends DomainNotFoundError {
+  constructor(id: string) {
+    super('scenario-not-found', 'Scenario Not Found',
+      `Scenario '${id}' does not exist.`, { scenario_id: id })
+  }
+}
+
+export class PlanNotFoundError extends DomainNotFoundError {
+  constructor(id: string) {
+    super('plan-not-found', 'Plan Not Found',
+      `Plan '${id}' does not exist.`, { plan_id: id })
+  }
+}
+
+export class PlanScheduleConflictError extends DomainError {
+  constructor(detail: string, extensions?: Record<string, unknown>) {
+    super('plan-schedule-conflict', 'Plan Schedule Conflict', detail, extensions)
+  }
+}

@@ -1,4 +1,4 @@
-import { pgSchema, text, timestamp, integer, jsonb, index, uniqueIndex } from 'drizzle-orm/pg-core'
+import { pgSchema, text, timestamp, integer, jsonb, boolean, index, uniqueIndex } from 'drizzle-orm/pg-core'
 import { ulid } from 'ulid'
 
 export const planningSchema = pgSchema('planning')
@@ -17,6 +17,21 @@ export const optimizationJobTypeEnum = planningSchema.enum('optimization_job_typ
 ])
 export const optimizationJobStatusEnum = planningSchema.enum('optimization_job_status', [
   'PENDING', 'QUEUED', 'RUNNING', 'COMPLETED', 'FAILED', 'RETRYING', 'DEAD', 'CANCELLED',
+])
+export const planTypeEnum = planningSchema.enum('plan_type', [
+  'BERTH', 'CRANE', 'YARD', 'WORKFORCE', 'ROUTE', 'TRAIN', 'NETWORK',
+])
+export const planStatusEnum = planningSchema.enum('plan_status', [
+  'DRAFT', 'ACTIVE', 'SUPERSEDED', 'ARCHIVED',
+])
+export const scheduleStatusEnum = planningSchema.enum('schedule_status', [
+  'PLANNED', 'CONFIRMED', 'IN_USE', 'RELEASED',
+])
+export const scenarioStatusEnum = planningSchema.enum('scenario_status', [
+  'CANDIDATE', 'SELECTED', 'REJECTED',
+])
+export const constraintTypeEnum = planningSchema.enum('constraint_type', [
+  'HARD', 'SOFT',
 ])
 
 // ─── Tables ───
@@ -63,4 +78,93 @@ export const optimizationJobEvents = planningSchema.table('optimization_job_even
 }, (t) => [
   index('optimization_job_events_job_idx').on(t.orgId, t.jobId),
   index('optimization_job_events_created_idx').on(t.orgId, t.createdAt),
+])
+
+// ─────────────────────────────────────────
+// Plans — a selected, approved optimization result that can be activated.
+// ─────────────────────────────────────────
+
+export const plans = planningSchema.table('plans', {
+  id: text('id').primaryKey().$defaultFn(() => ulid()),
+  orgId: text('org_id').notNull(),
+  name: text('name').notNull(),
+  planType: planTypeEnum('plan_type').notNull(),
+  status: planStatusEnum('status').notNull().default('DRAFT'),
+  validFrom: timestamp('valid_from', { withTimezone: true }),
+  validUntil: timestamp('valid_until', { withTimezone: true }),
+  optimizationJobId: text('optimization_job_id').references(() => optimizationJobs.id),
+  scenarioId: text('scenario_id'),
+  createdBy: text('created_by').notNull(),
+  approvedBy: text('approved_by'),
+  approvedAt: timestamp('approved_at', { withTimezone: true }),
+  activatedAt: timestamp('activated_at', { withTimezone: true }),
+  supersededBy: text('superseded_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('plans_org_idx').on(t.orgId),
+  index('plans_org_status_idx').on(t.orgId, t.status),
+  index('plans_org_type_idx').on(t.orgId, t.planType),
+])
+
+// ─────────────────────────────────────────
+// Schedules — resource/time entries belonging to a plan.
+// ─────────────────────────────────────────
+
+export const schedules = planningSchema.table('schedules', {
+  id: text('id').primaryKey().$defaultFn(() => ulid()),
+  orgId: text('org_id').notNull(),
+  planId: text('plan_id').notNull().references(() => plans.id),
+  resourceType: text('resource_type').notNull(),
+  resourceId: text('resource_id').notNull(),
+  startTime: timestamp('start_time', { withTimezone: true }).notNull(),
+  endTime: timestamp('end_time', { withTimezone: true }).notNull(),
+  operationId: text('operation_id'),
+  status: scheduleStatusEnum('status').notNull().default('PLANNED'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('schedules_org_idx').on(t.orgId),
+  index('schedules_plan_idx').on(t.planId),
+  index('schedules_resource_idx').on(t.resourceType, t.resourceId),
+])
+
+// ─────────────────────────────────────────
+// Scenarios — candidate optimization results for comparison before selection.
+// ─────────────────────────────────────────
+
+export const scenarios = planningSchema.table('scenarios', {
+  id: text('id').primaryKey().$defaultFn(() => ulid()),
+  orgId: text('org_id').notNull(),
+  planType: planTypeEnum('plan_type').notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  optimizationJobId: text('optimization_job_id').references(() => optimizationJobs.id),
+  metrics: jsonb('metrics'),
+  status: scenarioStatusEnum('status').notNull().default('CANDIDATE'),
+  createdBy: text('created_by').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('scenarios_org_idx').on(t.orgId),
+  index('scenarios_org_type_idx').on(t.orgId, t.planType),
+  index('scenarios_job_idx').on(t.optimizationJobId),
+])
+
+// ─────────────────────────────────────────
+// Constraints — limits that an optimization must respect.
+// ─────────────────────────────────────────
+
+export const constraints = planningSchema.table('constraints', {
+  id: text('id').primaryKey().$defaultFn(() => ulid()),
+  orgId: text('org_id').notNull(),
+  planType: planTypeEnum('plan_type').notNull(),
+  constraintType: text('constraint_type').notNull(),
+  description: text('description'),
+  value: jsonb('value'),
+  isHard: boolean('is_hard').notNull().default(true),
+  createdBy: text('created_by').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('constraints_org_idx').on(t.orgId),
+  index('constraints_org_type_idx').on(t.orgId, t.planType),
 ])

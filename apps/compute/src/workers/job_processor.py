@@ -16,13 +16,10 @@ import json
 from typing import Any
 
 from src.workers import job_repository
-from src.workers.registry import HANDLERS
+from src.workers.registry import HANDLERS, PERMANENT_ERROR_PREFIXES
 
 # Stream message envelope version — must match API JOB_STREAM_MESSAGE_VERSION
 MESSAGE_VERSION = "1"
-
-# Errors that are permanent (no automatic retry)
-PERMANENT_ERROR_PREFIXES = ("invalid-payload", "unknown-job-type", "handler-not-registered")
 
 # Backoff schedule in seconds per attempt (1-indexed): 30s, 2m, 10m
 RETRY_BACKOFF_SECONDS = [0, 30, 120, 600]

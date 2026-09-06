@@ -46,7 +46,7 @@ def test_route_geojson_result_is_feature_collection() -> None:
     assert result.type == "FeatureCollection"
 
 
-@patch("src.modules.geospatial.handler._run_queries", new_callable=AsyncMock)
+@patch("src.modules.geospatial.handler.run_queries", new_callable=AsyncMock)
 async def test_geofence_check_inside_and_outside(mock_queries: AsyncMock) -> None:
     mock_queries.return_value = [
         [
@@ -66,7 +66,7 @@ async def test_geofence_check_inside_and_outside(mock_queries: AsyncMock) -> Non
     assert result["checked_vehicle_ids"] == ["v1", "v2"]
 
 
-@patch("src.modules.geospatial.handler._run_queries", new_callable=AsyncMock)
+@patch("src.modules.geospatial.handler.run_queries", new_callable=AsyncMock)
 async def test_geofence_check_missing_geofence(mock_queries: AsyncMock) -> None:
     mock_queries.return_value = [[], []]
     with pytest.raises(ValueError, match="geofence not found"):
@@ -77,13 +77,13 @@ async def test_geofence_check_missing_geofence(mock_queries: AsyncMock) -> None:
         })
 
 
-@patch("src.modules.geospatial.handler._run_queries", new_callable=AsyncMock)
+@patch("src.modules.geospatial.handler.run_queries", new_callable=AsyncMock)
 async def test_geofence_check_invalid_payload(mock_queries: AsyncMock) -> None:
     with pytest.raises(ValueError, match="invalid-payload"):
         await geofence_check_handler({})  # missing required fields
 
 
-@patch("src.modules.geospatial.handler._run_queries", new_callable=AsyncMock)
+@patch("src.modules.geospatial.handler.run_queries", new_callable=AsyncMock)
 async def test_geofence_check_vehicle_ids_filter(mock_queries: AsyncMock) -> None:
     mock_queries.return_value = [
         [
@@ -102,7 +102,7 @@ async def test_geofence_check_vehicle_ids_filter(mock_queries: AsyncMock) -> Non
     assert result["inside_vehicle_ids"] == ["v1"]
 
 
-@patch("src.modules.geospatial.handler._run_queries", new_callable=AsyncMock)
+@patch("src.modules.geospatial.handler.run_queries", new_callable=AsyncMock)
 async def test_route_geojson_exports_features(mock_queries: AsyncMock) -> None:
     mock_queries.return_value = [[
         {
@@ -126,7 +126,7 @@ async def test_route_geojson_exports_features(mock_queries: AsyncMock) -> None:
     assert result["features"][0]["properties"]["id"] == "r1"
 
 
-@patch("src.modules.geospatial.handler._run_queries", new_callable=AsyncMock)
+@patch("src.modules.geospatial.handler.run_queries", new_callable=AsyncMock)
 async def test_route_geojson_invalid_payload(mock_queries: AsyncMock) -> None:
     with pytest.raises(ValueError, match="invalid-payload"):
         await route_geojson_handler({})

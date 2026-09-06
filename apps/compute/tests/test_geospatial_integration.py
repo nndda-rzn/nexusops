@@ -18,7 +18,7 @@ import pytest
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-from src.modules.geospatial.handler import _run_queries
+from src.modules.geospatial.sql import run_queries
 
 DB_URL = os.environ.get("DATABASE_URL", "")
 
@@ -66,7 +66,7 @@ async def test_rls_context_survives_multiple_statements() -> None:
     # road.vehicles (org-scoped RLS). If context is lost, SELECT returns 0
     # (policy blocks without current_org_id) instead of raising — assert we
     # can at least run without error and get the expected column shape.
-    result = await _run_queries(
+    result = await run_queries(
         [
             "SELECT id FROM road.vehicles WHERE org_id = %s",
             "SELECT id, name FROM shared_master.geofences WHERE id = %s",
@@ -83,7 +83,7 @@ async def test_rls_context_survives_multiple_statements() -> None:
 async def test_other_org_scoped() -> None:
     """geofence visible from any org context (shared master), proving context set."""
     await _setup()
-    result = await _run_queries(
+    result = await run_queries(
         ["SELECT id FROM shared_master.geofences WHERE id = %s"],
         [("gf-test-e1",)],
         ORG_B,

@@ -2,7 +2,12 @@ import { Elysia, t } from 'elysia'
 import { authMiddleware, withDbContext, requireHolding } from '@/shared/auth/middleware'
 import { UnauthorizedError } from '@/shared/errors'
 import { listGeofencesQuery, getGeofenceQuery } from '@/modules/shared-master/application/queries/geofence.queries'
-import { createGeofenceCommand, updateGeofenceCommand, setGeofenceStatusCommand, assertGeofenceNameAvailable } from '@/modules/shared-master/application/commands/geofence.commands'
+import {
+  createGeofenceCommand,
+  updateGeofenceCommand,
+  setGeofenceStatusCommand,
+  assertGeofenceNameAvailable,
+} from '@/modules/shared-master/application/commands/geofence.commands'
 import { parsePaginationQuery } from '@/shared/pagination/query-helpers'
 
 export const geofencesRoutes = new Elysia({ prefix: '/shared-master' })
@@ -14,7 +19,9 @@ export const geofencesRoutes = new Elysia({ prefix: '/shared-master' })
     const result = await withDbContext(user, (db) =>
       listGeofencesQuery(db, {
         ...parsePaginationQuery(query),
-        ...(query.type ? { geofenceType: query.type as 'TERMINAL' | 'PORT' | 'STATION' | 'WAREHOUSE' | 'AIRPORT' | 'CUSTOM' } : {}),
+        ...(query.type
+          ? { geofenceType: query.type as 'TERMINAL' | 'PORT' | 'STATION' | 'WAREHOUSE' | 'AIRPORT' | 'CUSTOM' }
+          : {}),
         ...(query.status ? { status: query.status as 'ACTIVE' | 'INACTIVE' } : {}),
       })
     )
@@ -59,7 +66,10 @@ export const geofencesRoutes = new Elysia({ prefix: '/shared-master' })
   }, {
     body: t.Object({
       name:         t.String(),
-      type:         t.Union([t.Literal('TERMINAL'), t.Literal('PORT'), t.Literal('STATION'), t.Literal('WAREHOUSE'), t.Literal('AIRPORT'), t.Literal('CUSTOM')]),
+      type:         t.Union([
+        t.Literal('TERMINAL'), t.Literal('PORT'), t.Literal('STATION'),
+        t.Literal('WAREHOUSE'), t.Literal('AIRPORT'), t.Literal('CUSTOM'),
+      ]),
       boundary:     t.String(),  // WKT Polygon
       reference_id: t.Optional(t.String()),
     }),

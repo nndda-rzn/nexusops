@@ -218,6 +218,13 @@
       "when": 1788612000000,
       "tag": "0031_phase5_geofence_memberships",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1788613000000,
+      "tag": "0032_phase6_analytics",
+      "breakpoints": true
     }
   ]
 }

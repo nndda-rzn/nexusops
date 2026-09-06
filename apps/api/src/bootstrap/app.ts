@@ -37,6 +37,7 @@ import { trainLifecycleRoutes } from '@/modules/rail/presentation/routes/train-l
 import { vehiclesRoutes } from '@/modules/road/presentation/routes/vehicles.routes'
 import { tripsRoutes } from '@/modules/road/presentation/routes/trips.routes'
 import { vehicleSpatialRoutes } from '@/modules/road/presentation/routes/vehicle-spatial.routes'
+import { routesRoutes } from '@/modules/road/presentation/routes/routes.routes'
 import { employeesRoutes } from '@/modules/workforce/presentation/routes/employees.routes'
 import { employeeProfileRoutes } from '@/modules/workforce/presentation/routes/employee-profile.routes'
 import { workforceResourcesRoutes } from '@/modules/workforce/presentation/routes/workforce-resources.routes'
@@ -118,7 +119,7 @@ export function createApp() {
     .use(vesselsRoutes).use(voyagesRoutes)
     .use(portCallsRoutes).use(portCallLifecycleRoutes)
     .use(railResourcesRoutes).use(trainsRoutes).use(trainLifecycleRoutes)
-    .use(vehiclesRoutes).use(tripsRoutes).use(vehicleSpatialRoutes)
+    .use(vehiclesRoutes).use(tripsRoutes).use(vehicleSpatialRoutes).use(routesRoutes)
     .use(employeesRoutes).use(employeeProfileRoutes).use(workforceResourcesRoutes).use(workforceAssignmentsRoutes)
     .use(assetsRoutes).use(assetOperationsRoutes)
     .use(workOrdersRoutes).use(maintenanceResourcesRoutes)

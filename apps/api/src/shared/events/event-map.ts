@@ -17,4 +17,5 @@ export type {
   ContainerAnnouncedEvent, ContainerMovedEvent, ContainerGateInEvent,
   ContainerGateOutEvent, ContainerDischargedEvent, ContainerHeldEvent,
   ContainerReleasedEvent, VehiclePositionUpdatedEvent,
+  GeofenceEnteredEvent, GeofenceExitedEvent,
 } from '@/shared/events/event-types'

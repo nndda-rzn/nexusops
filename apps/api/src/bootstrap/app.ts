@@ -58,6 +58,7 @@ import { planningRoutes } from '@/modules/planning/presentation/routes/optimizat
 import { planningPlansRoutes } from '@/modules/planning/presentation/routes/plans-scenarios.routes'
 import { planningConstraintsRoutes } from '@/modules/planning/presentation/routes/planning-constraints.routes'
 import { planningAllocationRoutes } from '@/modules/planning/presentation/routes/resource-allocation.routes'
+import { analyticsRoutes } from '@/modules/analytics/presentation/routes/analytics.routes'
 
 export function createApp() {
   return new Elysia()
@@ -83,6 +84,7 @@ export function createApp() {
           { name: 'Planning' }, { name: 'Billing' }, { name: 'Analytics' },
           { name: 'Intermodal' }, { name: 'Group' }, { name: 'Shared Master' },
           { name: 'Aviation' }, { name: 'Planning' },
+          { name: 'Analytics' },
         ],
       },
       path: '/swagger',
@@ -127,4 +129,5 @@ export function createApp() {
     .use(warehouseRoutes).use(warehouseOperationsRoutes)
     .use(aviationRoutes).use(aviationOperationsRoutes).use(aviationDocsRoutes).use(aviationHandlingRoutes)
     .use(planningRoutes).use(planningPlansRoutes).use(planningConstraintsRoutes).use(planningAllocationRoutes)
+    .use(analyticsRoutes)
 }

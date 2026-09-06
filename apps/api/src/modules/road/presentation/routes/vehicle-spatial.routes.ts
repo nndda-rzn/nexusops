@@ -11,7 +11,7 @@ export const vehicleSpatialRoutes = new Elysia({ prefix: '/road' })
   .get('/vehicles/nearby', async ({ user, query }) => {
     if (!user) throw new UnauthorizedError()
     const result = await withDbContext(user, (db) =>
-      getNearbyVehiclesQuery(query.lng, query.lat, query.radius_km, db)
+      getNearbyVehiclesQuery(user.orgId, query.lng, query.lat, query.radius_km, db)
     )
     return { data: result }
   }, {

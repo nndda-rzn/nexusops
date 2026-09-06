@@ -29,5 +29,5 @@ export interface ContainerReleasedEvent { type: 'container.released'; containerI
 export interface VehiclePositionUpdatedEvent { type: 'vehicle.position_updated'; vehicleId: string; position: string; speed?: string | undefined; heading?: string | undefined; recordedAt: Date }
 
 // Geofence (Phase 5)
-export interface GeofenceEnteredEvent { type: 'geofence.entered'; geofenceId: string; geofenceName: string; vehicleId: string; position: string; occurredAt: Date }
-export interface GeofenceExitedEvent { type: 'geofence.exited'; geofenceId: string; geofenceName: string; vehicleId: string; position: string; occurredAt: Date }
+export interface GeofenceEnteredEvent { type: 'geofence.entered'; orgId: string; geofenceId: string; geofenceName: string; vehicleId: string; position: string; occurredAt: Date }
+export interface GeofenceExitedEvent { type: 'geofence.exited'; orgId: string; geofenceId: string; geofenceName: string; vehicleId: string; position: string; occurredAt: Date }

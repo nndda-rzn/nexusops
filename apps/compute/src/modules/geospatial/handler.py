@@ -32,22 +32,34 @@ async def _run_queries(
     params: list[tuple],
     org_id: str,
 ) -> list[list[dict[str, Any]]]:
-    """Run multiple SQL queries under one tenant RLS context."""
+    """Run multiple SQL queries under one tenant RLS context.
+
+    Explicit transaction is required: psycopg runs each statement in its own
+    implicit transaction, so set_config(..., is_local=true) would be lost after
+    the first statement. Inside one explicit transaction the RLS context lives
+    for all queries, exactly like the API's withDbContext. entity_type is set
+    too, matching job_repository._set_tenant_context.
+    """
     conn = await get_db()
     try:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                "SELECT set_config('app.current_org_id', %s, true)",
-                (org_id,),
-            )
-            results: list[list[dict[str, Any]]] = []
-            for query, p in zip(queries, params):
-                await cur.execute(query, p)
-                cols = [d.name for d in cur.description] if cur.description else []
-                rows = [dict(zip(cols, r)) for r in await cur.fetchall()]
-                results.append(rows)
-            await conn.commit()
-            return results
+        async with conn.transaction():
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT set_config('app.current_org_id', %s, true), "
+                    "set_config('app.entity_type', 'ENTITY', true)",
+                    (org_id,),
+                )
+                results: list[list[dict[str, Any]]] = []
+                for query, p in zip(queries, params):
+                    await cur.execute(query, p)
+                    raw = await cur.fetchall()
+                    if raw and isinstance(raw[0], dict):
+                        results.append(list(raw))
+                    else:
+                        # tuple rows (no dict_row factory) → wrap with column names
+                        cols = [d.name for d in cur.description] if cur.description else []
+                        results.append([dict(zip(cols, r)) for r in raw])
+                return results
     finally:
         await release_db(conn)
 

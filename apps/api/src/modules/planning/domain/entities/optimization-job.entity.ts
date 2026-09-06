@@ -16,11 +16,13 @@ export type OptimizationJobType =
   | 'YARD_OPTIMIZATION' | 'BERTH_SCHEDULING' | 'CRANE_SCHEDULING'
   | 'WORKFORCE_SCHEDULING' | 'ROUTE_OPTIMIZATION' | 'TRAIN_SCHEDULING'
   | 'NETWORK_ANALYSIS' | 'CRITICAL_PATH' | 'DELAY_PROPAGATION'
+  | 'GEOFENCE_CHECK' | 'ROUTE_GEOJSON'
 
 export const OPTIMIZATION_JOB_TYPES: OptimizationJobType[] = [
   'YARD_OPTIMIZATION', 'BERTH_SCHEDULING', 'CRANE_SCHEDULING',
   'WORKFORCE_SCHEDULING', 'ROUTE_OPTIMIZATION', 'TRAIN_SCHEDULING',
   'NETWORK_ANALYSIS', 'CRITICAL_PATH', 'DELAY_PROPAGATION',
+  'GEOFENCE_CHECK', 'ROUTE_GEOJSON',
 ]
 
 // Job types with a registered solver handler in the compute worker registry
@@ -28,6 +30,7 @@ export const OPTIMIZATION_JOB_TYPES: OptimizationJobType[] = [
 // job that no worker can process — rejected at the API boundary instead.
 export const SUPPORTED_JOB_TYPES: OptimizationJobType[] = [
   'YARD_OPTIMIZATION', 'NETWORK_ANALYSIS', 'CRITICAL_PATH', 'DELAY_PROPAGATION',
+  'GEOFENCE_CHECK', 'ROUTE_GEOJSON',
 ]
 
 export interface OptimizationJobProps {

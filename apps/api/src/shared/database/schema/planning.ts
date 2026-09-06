@@ -14,6 +14,8 @@ export const optimizationJobTypeEnum = planningSchema.enum('optimization_job_typ
   'NETWORK_ANALYSIS',
   'CRITICAL_PATH',
   'DELAY_PROPAGATION',
+  'GEOFENCE_CHECK',
+  'ROUTE_GEOJSON',
 ])
 export const optimizationJobStatusEnum = planningSchema.enum('optimization_job_status', [
   'PENDING', 'QUEUED', 'RUNNING', 'COMPLETED', 'FAILED', 'RETRYING', 'DEAD', 'CANCELLED',

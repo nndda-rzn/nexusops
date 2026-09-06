@@ -17,7 +17,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:reset": "bun run src/shared/database/reset.ts",
-    "db:seed": "bun run src/shared/database/seed.ts"
+    "db:seed": "bun run src/shared/database/seed.ts",
+    "db:views": "bun run src/shared/database/views.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1126.0",

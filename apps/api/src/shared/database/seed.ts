@@ -1,7 +1,8 @@
 import { db } from '@/shared/database/client'
 import { organizations, users, roles, orgMembers, orgModuleAccess } from '@/shared/database/schema/identity'
-import { geofences } from '@/shared/database/schema/shared-master'
-import { vehicles, routes, vehiclePositions } from '@/shared/database/schema/road'
+import { geofences, ports } from '@/shared/database/schema/shared-master'
+import { vehicles, routes, vehiclePositions, trips, drivers } from '@/shared/database/schema/road'
+import { vessels, voyages, portCalls } from '@/shared/database/schema/maritime'
 import { eq, and } from 'drizzle-orm'
 import { logger } from '@/shared/logging'
 import { hashPassword } from '@/shared/auth/password'
@@ -44,6 +45,29 @@ async function resolveRoleId(fallbackId: string, orgId: string, name: string): P
   const [row] = await db.select({ id: roles.id }).from(roles)
     .where(and(eq(roles.orgId, orgId), eq(roles.name, name))).limit(1)
   return row?.id ?? fallbackId
+}
+
+async function resolvePortId(fallbackCode: string, name: string): Promise<string> {
+  const [row] = await db.select({ id: ports.id }).from(ports)
+    .where(eq(ports.code, fallbackCode)).limit(1)
+  if (row) return row.id
+
+  const id = fallbackCode === 'IDTPP'
+    ? '01ARZ3NDEKTSV4RRFFQ69G5R0A'
+    : '01ARZ3NDEKTSV4RRFFQ69G5R0B'
+  await db.insert(ports).values({
+    id,
+    code: fallbackCode,
+    name,
+    country: 'Indonesia',
+    city: fallbackCode === 'IDTPP' ? 'Jakarta' : 'Surabaya',
+    type: 'SEA',
+    location: fallbackCode === 'IDTPP'
+      ? 'POINT(106.89 -6.11)'
+      : 'POINT(112.73 -7.20)',
+    status: 'ACTIVE',
+  }).onConflictDoNothing()
+  return id
 }
 
 async function seed() {
@@ -297,6 +321,132 @@ async function seed() {
   ]).onConflictDoNothing()
 
   logger.info('Vehicle positions seeded')
+
+  // ─────────────────────────────────────────
+  // Phase 6 operational seed — road trips
+  // Spread over last 30 days so daily KPI aggregation has shape.
+  // ─────────────────────────────────────────
+  const day = 24 * 60 * 60 * 1000
+  const now = Date.now()
+  const tripsSeed = [
+    // [id, vehicleId, status, delayMinutes, daysAgo, scheduledDurMin, actualDurMin]
+    ['TRIP001', truckAId, 'COMPLETED', 0, 1, 60, 55],
+    ['TRIP002', truckBId, 'COMPLETED', 15, 1, 90, 105],
+    ['TRIP003', truckAId, 'COMPLETED', 0, 2, 45, 42],
+    ['TRIP004', truckBId, 'DELAYED', 30, 3, 75, 105],
+    ['TRIP005', truckAId, 'COMPLETED', 0, 4, 60, 58],
+    ['TRIP006', truckBId, 'CANCELLED', 0, 5, 50, 0],
+    ['TRIP007', truckAId, 'COMPLETED', 20, 6, 80, 100],
+    ['TRIP008', truckBId, 'COMPLETED', 0, 7, 55, 50],
+    ['TRIP009', truckAId, 'EN_ROUTE', 0, 8, 60, 0],
+    ['TRIP010', truckBId, 'COMPLETED', 45, 9, 70, 115],
+    ['TRIP011', truckAId, 'BREAKDOWN', 60, 10, 65, 0],
+    ['TRIP012', truckBId, 'COMPLETED', 0, 12, 40, 38],
+    ['TRIP013', truckAId, 'COMPLETED', 10, 15, 90, 100],
+    ['TRIP014', truckBId, 'COMPLETED', 0, 20, 50, 47],
+    ['TRIP015', truckAId, 'DELAYED', 25, 25, 60, 85],
+  ]
+
+  await db.insert(trips).values(
+    tripsSeed.map(([id, vehicleId, status, delayMinutes, daysAgo, scheduledDurMin, actualDurMin]) => {
+      const scheduledDeparture = new Date(now - (daysAgo as number) * day)
+      const scheduledArrival = new Date(scheduledDeparture.getTime() + (scheduledDurMin as number) * 60000)
+      const actualDeparture = status === 'COMPLETED' || status === 'DELAYED' || status === 'EN_ROUTE'
+        ? scheduledDeparture
+        : null
+      const actualArrival = status === 'COMPLETED' && (actualDurMin as number) > 0
+        ? new Date(scheduledDeparture.getTime() + (actualDurMin as number) * 60000)
+        : null
+      return {
+        id: id as string,
+        orgId: ROAD_ID,
+        referenceNumber: `TRIP-${id}`,
+        vehicleId: vehicleId as string,
+        origin: 'Tanjung Priok',
+        destination: 'Cikarang',
+        scheduledDeparture,
+        scheduledArrival,
+        actualDeparture,
+        actualArrival,
+        status: status as 'COMPLETED' | 'DELAYED' | 'CANCELLED' | 'EN_ROUTE' | 'BREAKDOWN',
+        delayMinutes: delayMinutes as number,
+      }
+    })
+  ).onConflictDoNothing()
+
+  logger.info('Road trips seeded')
+
+  // ─────────────────────────────────────────
+  // Phase 6 operational seed — maritime
+  // Ports resolve by code; vessels/voyages/port_calls deterministic + idempotent.
+  // ─────────────────────────────────────────
+  const priokPortId = await resolvePortId('IDTPP', 'Tanjung Priok')
+  const tgPerakPortId = await resolvePortId('IDSUB', 'Tanjung Perak')
+
+  const vesselAId = '01ARZ3NDEKTSV4RRFFQ69G5RSN'
+  const vesselBId = '01ARZ3NDEKTSV4RRFFQ69G5STO'
+  await db.insert(vessels).values([
+    {
+      id: vesselAId, orgId: MARITIME_ID, imoNumber: 'IMO9000001',
+      name: 'MV Nusantara Satu', type: 'CONTAINER', status: 'IN_VOYAGE',
+    },
+    {
+      id: vesselBId, orgId: MARITIME_ID, imoNumber: 'IMO9000002',
+      name: 'MV Nusantara Dua', type: 'CONTAINER', status: 'ACTIVE',
+    },
+  ]).onConflictDoNothing()
+
+  const voyageAId = '01ARZ3NDEKTSV4RRFFQ69G5TUP'
+  const voyageBId = '01ARZ3NDEKTSV4RRFFQ69G5UVQ'
+  await db.insert(voyages).values([
+    {
+      id: voyageAId, orgId: MARITIME_ID, voyageNumber: 'VOY-001',
+      vesselId: vesselAId, departurePortId: priokPortId,
+      destinationPortId: tgPerakPortId, status: 'COMPLETED',
+    },
+    {
+      id: voyageBId, orgId: MARITIME_ID, voyageNumber: 'VOY-002',
+      vesselId: vesselBId, departurePortId: priokPortId,
+      destinationPortId: tgPerakPortId, status: 'IN_PROGRESS',
+    },
+  ]).onConflictDoNothing()
+
+  const portCallsSeed = [
+    // [id, voyageId, status, daysAgo, etaOffsetH, atbOffsetH, atdOffsetH]
+    ['PC001', voyageAId, 'DEPARTED', 2, 0, 4, 30],
+    ['PC002', voyageAId, 'DEPARTED', 9, 0, 5, 36],
+    ['PC003', voyageAId, 'DEPARTED', 16, 0, 6, 42],
+    ['PC004', voyageAId, 'DEPARTED', 23, 0, 3, 28],
+    ['PC005', voyageAId, 'DEPARTED', 29, 0, 4, 33],
+    ['PC006', voyageBId, 'BERTHED', 1, 0, 5, null],
+    ['PC007', voyageBId, 'OPERATIONS', 4, 0, null, null],
+    ['PC008', voyageBId, 'ANNOUNCED', 7, 0, null, null],
+  ]
+
+  await db.insert(portCalls).values(
+    portCallsSeed.map(([id, voyageId, status, daysAgo, atbOffsetH, atdOffsetH]) => {
+      const eta = new Date(now - (daysAgo as number) * day)
+      const atb = (atbOffsetH as number | null) !== null
+        ? new Date(eta.getTime() + (atbOffsetH as number) * 3600000)
+        : null
+      const atd = (atdOffsetH as number | null) !== null
+        ? new Date(eta.getTime() + (atdOffsetH as number) * 3600000)
+        : null
+      return {
+        id: id as string,
+        orgId: MARITIME_ID,
+        voyageId: voyageId as string,
+        portId: priokPortId,
+        eta,
+        ata: eta,
+        atb,
+        atd,
+        status: status as 'DEPARTED' | 'BERTHED' | 'OPERATIONS' | 'ANNOUNCED',
+      }
+    })
+  ).onConflictDoNothing()
+
+  logger.info('Maritime operational seed done')
   logger.info('Seed completed successfully')
   logger.info('─────────────────────────────────')
   logger.info('Seed credentials:')

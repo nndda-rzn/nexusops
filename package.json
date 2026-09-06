@@ -32,6 +32,7 @@
     "db:generate": "bun run --cwd apps/api db:generate",
     "db:reset": "bun run --cwd apps/api db:reset",
     "db:studio": "bun run --cwd apps/api db:studio",
-    "db:seed": "bun run --cwd apps/api db:seed"
+    "db:seed": "bun run --cwd apps/api db:seed",
+    "db:views": "bun run --cwd apps/api db:views"
   }
 }

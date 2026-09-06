@@ -145,15 +145,27 @@ async def main() -> None:
         shutdown_event.set()
 
     loop = asyncio.get_running_loop()
-    loop.add_signal_handler(signal.SIGTERM, handle_shutdown)
-    loop.add_signal_handler(signal.SIGINT, handle_shutdown)
+    if hasattr(signal, "SIGTERM"):
+        # add_signal_handler is not supported on Windows (NotImplementedError)
+        try:
+            loop.add_signal_handler(signal.SIGTERM, handle_shutdown)
+            loop.add_signal_handler(signal.SIGINT, handle_shutdown)
+        except NotImplementedError:
+            logger.info("Signal handlers unsupported on this platform; skipping")
 
     tasks = [asyncio.create_task(w.run()) for w in workers]
 
     logger.info("Compute engine ready, waiting for jobs...")
 
     try:
-        await shutdown_event.wait()
+        # On platforms without signal handlers, poll for Ctrl-C via KeyboardInterrupt
+        while not shutdown_event.is_set():
+            try:
+                await asyncio.wait_for(shutdown_event.wait(), timeout=0.5)
+            except TimeoutError:
+                continue
+    except KeyboardInterrupt:
+        handle_shutdown()
     finally:
         for t in tasks:
             t.cancel()

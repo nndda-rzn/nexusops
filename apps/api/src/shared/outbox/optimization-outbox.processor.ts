@@ -10,16 +10,17 @@ import { logger } from '@/shared/logging'
 // Outbox processor — background loop that forwards PENDING outbox events
 // to Redis Streams. Runs every second (data-consistency: outbox pattern).
 //
-// Flow per event:
-//   1. Claim PENDING events (FOR UPDATE SKIP LOCKED — no double-processing)
-//   2. Update job PENDING → QUEUED (same transaction as publish)
-//   3. XADD to Redis Stream
-//   4. Mark outbox PUBLISHED
+// Crash safety (duplicate stream messages are harmless):
+//   1. XADD to Redis Stream FIRST
+//   2. Atomically move job PENDING → QUEUED guarded by `WHERE status='PENDING'`.
+//      If another processor already dispatched this job the UPDATE matches 0
+//      rows → skip (worker claim rejects duplicate messages anyway).
+//   3. Mark outbox PUBLISHED.
 //
-// Crash safety: job status and outbox status are committed BEFORE XADD.
-// If XADD fails, status stays QUEUED and the job is re-dispatched on next run
-// (idempotent — worker claims QUEUED jobs; duplicate stream messages are
-// rejected by the claim query `status IN ('QUEUED','RETRYING')`).
+// If we crash after XADD before step 2, the outbox row stays PENDING and the
+// job stays PENDING; the next tick re-publishes a duplicate stream message.
+// The worker's atomic claim (`status IN ('QUEUED','RETRYING')`) guarantees the
+// solver runs at most once.
 // ─────────────────────────────────────────
 
 const BATCH_SIZE = 50
@@ -28,7 +29,6 @@ export async function processOptimizationOutbox(): Promise<number> {
   let processed = 0
 
   const pending = await db.transaction(async (tx) => {
-    // Claim: mark events in-flight so concurrent publishers don't double-send
     return tx.select().from(outboxEvents)
       .where(and(
         eq(outboxEvents.status, 'PENDING'),
@@ -48,7 +48,6 @@ export async function processOptimizationOutbox(): Promise<number> {
         continue
       }
 
-      // Load job (no RLS here — processor runs outside request context; job is org-scoped by its own org_id)
       const [jobRow] = await db.select().from(optimizationJobs)
         .where(and(eq(optimizationJobs.id, jobId), eq(optimizationJobs.orgId, event.orgId)))
         .limit(1)
@@ -58,24 +57,34 @@ export async function processOptimizationOutbox(): Promise<number> {
           .where(eq(outboxEvents.id, event.id))
         continue
       }
-      if (jobRow.status === 'CANCELLED' || jobRow.status === 'DEAD' || jobRow.status === 'COMPLETED') {
-        // Terminal state — no dispatch, just mark delivered
+      if (jobRow.status !== 'PENDING' && jobRow.status !== 'RETRYING') {
+        // Already dispatched (QUEUED/RUNNING/terminal) — nothing to do
         await db.update(outboxEvents).set({ status: 'PUBLISHED', publishedAt: new Date() })
           .where(eq(outboxEvents.id, event.id))
         continue
       }
 
+      // 1. Publish to Redis Stream first
       const attempt = jobRow.retryCount + 1
       await publishJobToStream({
         jobId: jobRow.id, orgId: jobRow.orgId, jobType: jobRow.jobType,
         attempt, payload: jobRow.input, requestedBy: jobRow.createdBy,
       })
 
-      // Commit delivery state after publish
+      // 2. Move job PENDING → QUEUED atomically (guard: only if still PENDING)
+      const [updated] = await db.update(optimizationJobs)
+        .set({ status: 'QUEUED', queuedAt: sql`coalesce(${optimizationJobs.queuedAt}, now())` })
+        .where(and(eq(optimizationJobs.id, jobId), eq(optimizationJobs.status, 'PENDING')))
+        .returning({ id: optimizationJobs.id })
+
+      if (!updated) {
+        // Another processor dispatched it already — mark delivered, skip audit
+        await db.update(outboxEvents).set({ status: 'PUBLISHED', publishedAt: new Date() })
+          .where(eq(outboxEvents.id, event.id))
+        continue
+      }
+
       await db.transaction(async (tx) => {
-        await tx.update(optimizationJobs)
-          .set({ status: 'QUEUED', queuedAt: sql`coalesce(${optimizationJobs.queuedAt}, now())` })
-          .where(eq(optimizationJobs.id, jobId))
         await appendJobEvent({
           orgId: jobRow.orgId, jobId,
           from: jobRow.status as never, to: 'QUEUED',
@@ -150,10 +159,11 @@ export async function processOptimizationRetries(): Promise<number> {
         attempt: job.retryCount + 1, payload: job.input,
         requestedBy: job.createdBy,
       })
-      await db.update(optimizationJobs)
+      const [updated] = await db.update(optimizationJobs)
         .set({ status: 'QUEUED', queuedAt: sql`coalesce(${optimizationJobs.queuedAt}, now())` })
-        .where(eq(optimizationJobs.id, job.id))
-      redispatched += 1
+        .where(and(eq(optimizationJobs.id, job.id), eq(optimizationJobs.status, 'RETRYING')))
+        .returning({ id: optimizationJobs.id })
+      if (updated) redispatched += 1
     } catch (err) {
       logger.error('Retry dispatch failed', {
         job_id: job.id,

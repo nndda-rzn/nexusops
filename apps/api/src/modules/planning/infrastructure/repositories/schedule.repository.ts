@@ -1,5 +1,5 @@
 import { plans, schedules } from '@/shared/database/schema/planning'
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and, lt, gt } from 'drizzle-orm'
 import { generateId } from '@/shared/ids'
 import type { DbContext } from '@/shared/database/client'
 
@@ -47,8 +47,8 @@ export async function findResourceOverlaps(
       eq(schedules.resourceType, resourceType),
       eq(schedules.resourceId, resourceId),
       eq(plans.status, 'ACTIVE'),
-      sql`${schedules.startTime} < ${endTime}`,
-      sql`${schedules.endTime} > ${startTime}`,
+      lt(schedules.startTime, endTime),
+      gt(schedules.endTime, startTime),
     ))
   return rows
 }

@@ -1,4 +1,4 @@
-import { OptimizationJob } from '@/modules/planning/domain/entities/optimization-job.entity'
+import { OptimizationJob, SUPPORTED_JOB_TYPES } from '@/modules/planning/domain/entities/optimization-job.entity'
 import { insertOptimizationJob, findJobByIdempotencyKey, saveOptimizationJob, appendJobEvent, findOptimizationJobByIdOrFail } from '@/modules/planning/infrastructure/repositories/optimization-job.repository'
 import { appendOutboxEvent } from '@/shared/outbox/outbox.repository'
 import { eventBus } from '@/shared/events'
@@ -27,6 +27,12 @@ export interface RequestOptimizationResult {
 export async function requestOptimizationCommand(
   cmd: RequestOptimizationCommand, db: DbContext
 ): Promise<RequestOptimizationResult> {
+  if (!SUPPORTED_JOB_TYPES.includes(cmd.jobType)) {
+    throw new DomainError('optimization-job-type-unavailable', 'Optimization Job Type Unavailable',
+      `Job type '${cmd.jobType}' has no registered solver handler yet. ` +
+      `Available: ${SUPPORTED_JOB_TYPES.join(', ')}.`,
+      { job_type: cmd.jobType, available: SUPPORTED_JOB_TYPES })
+  }
   if (cmd.idempotencyKey) {
     const existing = await findJobByIdempotencyKey(cmd.orgId, cmd.idempotencyKey, db)
     if (existing) {

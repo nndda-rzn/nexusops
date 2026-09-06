@@ -1,5 +1,5 @@
 import { resourceAllocations } from '@/shared/database/schema/planning'
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and, sql, lt, gt } from 'drizzle-orm'
 import { generateId } from '@/shared/ids'
 import { DomainError, DomainNotFoundError } from '@/shared/errors'
 import type { DbContext } from '@/shared/database/client'
@@ -39,8 +39,8 @@ export async function createAllocationCommand(cmd: CreateAllocationCommand, db: 
       eq(resourceAllocations.resourceType, cmd.resourceType),
       eq(resourceAllocations.resourceId, cmd.resourceId),
       sql`${resourceAllocations.status} != 'RELEASED'`,
-      sql`${resourceAllocations.startTime} < ${cmd.endTime}`,
-      sql`${resourceAllocations.endTime} > ${cmd.startTime}`,
+      lt(resourceAllocations.startTime, cmd.endTime),
+      gt(resourceAllocations.endTime, cmd.startTime),
     ))
     .limit(1)
   if (conflicts.length > 0) {

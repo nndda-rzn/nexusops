@@ -1,5 +1,7 @@
 import { db } from '@/shared/database/client'
 import { organizations, users, roles, permissions, rolePermissions, orgMembers, orgModuleAccess } from '@/shared/database/schema/identity'
+import { geofences } from '@/shared/database/schema/shared-master'
+import { vehicles, routes, vehiclePositions } from '@/shared/database/schema/road'
 import { generateId } from '@/shared/ids'
 import { logger } from '@/shared/logging'
 import { hashPassword } from '@/shared/auth/password'
@@ -172,6 +174,89 @@ async function seed() {
   ]).onConflictDoNothing()
 
   logger.info('Module access seeded')
+
+  // ─────────────────────────────────────────
+  // Geospatial seed (Phase 5)
+  // Tanjung Priok terminal zone + Cikarang warehouse zone
+  // ─────────────────────────────────────────
+  const priokGeofenceId = generateId()
+  const cikarangGeofenceId = generateId()
+
+  await db.insert(geofences).values([
+    {
+      id: priokGeofenceId,
+      name: 'Tanjung Priok Terminal Zone',
+      geofenceType: 'TERMINAL',
+      boundary: 'POLYGON((106.87 -6.10, 106.91 -6.10, 106.91 -6.12, 106.87 -6.12, 106.87 -6.10))',
+      status: 'ACTIVE',
+    },
+    {
+      id: cikarangGeofenceId,
+      name: 'Cikarang Warehouse Zone',
+      geofenceType: 'WAREHOUSE',
+      boundary: 'POLYGON((107.12 -6.28, 107.16 -6.28, 107.16 -6.31, 107.12 -6.31, 107.12 -6.28))',
+      status: 'ACTIVE',
+    },
+  ]).onConflictDoNothing()
+
+  logger.info('Geofences seeded')
+
+  // ─────────────────────────────────────────
+  // Road domain seed — vehicles, route, positions
+  // ─────────────────────────────────────────
+  const truckAId = generateId()
+  const truckBId = generateId()
+
+  await db.insert(vehicles).values([
+    {
+      id: truckAId,
+      orgId: ROAD_ID,
+      plateNumber: 'B 1234 XCD',
+      type: 'TRUCK',
+      status: 'ON_TRIP',
+    },
+    {
+      id: truckBId,
+      orgId: ROAD_ID,
+      plateNumber: 'B 5678 ZAB',
+      type: 'TRUCK',
+      status: 'AVAILABLE',
+    },
+  ]).onConflictDoNothing()
+
+  logger.info('Road vehicles seeded')
+
+  const priokToCikarangRouteId = generateId()
+  await db.insert(routes).values({
+    id: priokToCikarangRouteId,
+    orgId: ROAD_ID,
+    origin: 'POINT(106.89 -6.11)',
+    destination: 'POINT(107.14 -6.30)',
+    geometry: 'LINESTRING(106.89 -6.11, 107.00 -6.20, 107.14 -6.30)',
+    distanceKm: '42.5',
+    estimatedDurationMinutes: 55,
+    routeType: 'HIGHWAY',
+  }).onConflictDoNothing()
+
+  logger.info('Road route seeded')
+
+  // truckA inside Priok zone, truckB outside (near Cikarang)
+  await db.insert(vehiclePositions).values([
+    {
+      id: generateId(),
+      vehicleId: truckAId,
+      position: 'POINT(106.89 -6.11)',
+      recordedAt: new Date(),
+    },
+    {
+      id: generateId(),
+      vehicleId: truckBId,
+      position: 'POINT(107.15 -6.29)',
+      recordedAt: new Date(),
+    },
+  ]).onConflictDoNothing()
+
+  logger.info('Vehicle positions seeded')
   logger.info('Seed completed successfully')
   logger.info('─────────────────────────────────')
   logger.info('Seed credentials:')

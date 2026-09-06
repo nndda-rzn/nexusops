@@ -3,7 +3,7 @@ import { organizations, users, roles, orgMembers, orgModuleAccess } from '@/shar
 import { geofences, ports } from '@/shared/database/schema/shared-master'
 import { vehicles, routes, vehiclePositions, trips, drivers } from '@/shared/database/schema/road'
 import { vessels, voyages, portCalls } from '@/shared/database/schema/maritime'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import { logger } from '@/shared/logging'
 import { hashPassword } from '@/shared/auth/password'
 
@@ -26,6 +26,7 @@ let WAREHOUSE_ID = '01ARZ3NDEKTSV4RRFFQ69G5FEZ'
 
 let ADMIN_USER_ID = '01ARZ3NDEKTSV4RRFFQ69G5FFA'
 let MARITIME_ADMIN_ID = '01ARZ3NDEKTSV4RRFFQ69G5FGB'
+let ROAD_ADMIN_ID = '01ARZ3NDEKTSV4RRFFQ69G5FHC'
 
 // Resolve existing ID by column match, fallback to deterministic ID.
 // Keeps FK refs stable whether the DB was seeded before or is fresh.
@@ -83,6 +84,7 @@ async function seed() {
   WAREHOUSE_ID = await resolveOrgId(WAREHOUSE_ID, 'entitas-warehouse')
   ADMIN_USER_ID = await resolveUserId(ADMIN_USER_ID, 'admin@nexusops.io')
   MARITIME_ADMIN_ID = await resolveUserId(MARITIME_ADMIN_ID, 'ops@pelayaran.nexusops.io')
+  ROAD_ADMIN_ID = await resolveUserId(ROAD_ADMIN_ID, 'ops@trucking.nexusops.io')
 
   // ─────────────────────────────────────────
   // Organizations
@@ -141,6 +143,7 @@ async function seed() {
   // ─────────────────────────────────────────
   const adminPasswordHash = await hashPassword('Admin@123456')
   const maritimePasswordHash = await hashPassword('Maritime@123456')
+  const roadPasswordHash = await hashPassword('Road@123456')
 
   await db.insert(users).values([
     {
@@ -157,6 +160,13 @@ async function seed() {
       passwordHash: maritimePasswordHash,
       status: 'ACTIVE',
     },
+    {
+      id: ROAD_ADMIN_ID,
+      email: 'ops@trucking.nexusops.io',
+      name: 'Road Ops Manager',
+      passwordHash: roadPasswordHash,
+      status: 'ACTIVE',
+    },
   ]).onConflictDoNothing()
 
   logger.info('Users seeded')
@@ -166,8 +176,10 @@ async function seed() {
   // ─────────────────────────────────────────
   let HOLDING_ADMIN_ROLE_ID = '01ARZ3NDEKTSV4RRFFQ69G5GHC'
   let MARITIME_OPS_ROLE_ID = '01ARZ3NDEKTSV4RRFFQ69G5HID'
+  let ROAD_OPS_ROLE_ID = '01ARZ3NDEKTSV4RRFFQ69G5IJE'
   HOLDING_ADMIN_ROLE_ID = await resolveRoleId(HOLDING_ADMIN_ROLE_ID, HOLDING_ID, 'platform_admin')
   MARITIME_OPS_ROLE_ID = await resolveRoleId(MARITIME_OPS_ROLE_ID, MARITIME_ID, 'operations_manager')
+  ROAD_OPS_ROLE_ID = await resolveRoleId(ROAD_OPS_ROLE_ID, ROAD_ID, 'road_operations_manager')
 
   await db.insert(roles).values([
     {
@@ -182,6 +194,13 @@ async function seed() {
       orgId: MARITIME_ID,
       name: 'operations_manager',
       description: 'Maritime operations manager',
+      isSystem: true,
+    },
+    {
+      id: ROAD_OPS_ROLE_ID,
+      orgId: ROAD_ID,
+      name: 'road_operations_manager',
+      description: 'Road operations manager',
       isSystem: true,
     },
   ]).onConflictDoNothing()
@@ -204,6 +223,12 @@ async function seed() {
       userId: MARITIME_ADMIN_ID,
       roleId: MARITIME_OPS_ROLE_ID,
     },
+    {
+      id: '01ARZ3NDEKTSV4RRFFQ69G5KLG',
+      orgId: ROAD_ID,
+      userId: ROAD_ADMIN_ID,
+      roleId: ROAD_OPS_ROLE_ID,
+    },
   ]).onConflictDoNothing()
 
   logger.info('Org members seeded')
@@ -222,6 +247,11 @@ async function seed() {
     'yard', 'assets', 'maintenance', 'workforce', 'analytics', 'billing', 'intermodal',
   ]
 
+  const roadModules = [
+    'operations', 'shipments', 'containers', 'road', 'workforce',
+    'assets', 'maintenance', 'analytics', 'billing', 'intermodal',
+  ]
+
   await db.insert(orgModuleAccess).values([
     ...holdingModules.map(m => ({
       orgId: HOLDING_ID,
@@ -231,6 +261,12 @@ async function seed() {
     })),
     ...maritimeModules.map(m => ({
       orgId: MARITIME_ID,
+      moduleKey: m,
+      enabled: true,
+      grantedBy: ADMIN_USER_ID,
+    })),
+    ...roadModules.map(m => ({
+      orgId: ROAD_ID,
       moduleKey: m,
       enabled: true,
       grantedBy: ADMIN_USER_ID,
@@ -424,8 +460,11 @@ async function seed() {
   ]
 
   await db.insert(portCalls).values(
-    portCallsSeed.map(([id, voyageId, status, daysAgo, atbOffsetH, atdOffsetH]) => {
+    portCallsSeed.map(([id, voyageId, status, daysAgo, etaOffsetH, atbOffsetH, atdOffsetH]) => {
       const eta = new Date(now - (daysAgo as number) * day)
+      const actualEta = (etaOffsetH as number | null) !== null
+        ? new Date(eta.getTime() + (etaOffsetH as number) * 3600000)
+        : null
       const atb = (atbOffsetH as number | null) !== null
         ? new Date(eta.getTime() + (atbOffsetH as number) * 3600000)
         : null
@@ -437,14 +476,26 @@ async function seed() {
         orgId: MARITIME_ID,
         voyageId: voyageId as string,
         portId: priokPortId,
-        eta,
-        ata: eta,
+        eta: actualEta,
+        ata: actualEta,
         atb,
         atd,
         status: status as 'DEPARTED' | 'BERTHED' | 'OPERATIONS' | 'ANNOUNCED',
       }
     })
-  ).onConflictDoNothing()
+  ).onConflictDoUpdate({
+    target: portCalls.id,
+    set: {
+      orgId: MARITIME_ID,
+      portId: priokPortId,
+      eta: sql`excluded.eta`,
+      ata: sql`excluded.ata`,
+      atb: sql`excluded.atb`,
+      atd: sql`excluded.atd`,
+      status: sql`excluded.status`,
+      updatedAt: new Date(),
+    },
+  })
 
   logger.info('Maritime operational seed done')
   logger.info('Seed completed successfully')

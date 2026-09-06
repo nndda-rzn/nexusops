@@ -1,4 +1,4 @@
-import { geofences } from '@/shared/database/schema/shared-master'
+import { geofences, geofenceMemberships } from '@/shared/database/schema/shared-master'
 import { eq } from 'drizzle-orm'
 import { generateId } from '@/shared/ids'
 import { assertValidWkt } from '@/shared/database/types/geometry'
@@ -70,6 +70,12 @@ export async function setGeofenceStatusCommand(
 
   await db.update(geofences).set({ status, updatedAt: new Date() })
     .where(eq(geofences.id, id))
+
+  // E-5: when a geofence is deactivated, clear its membership state — no
+  // stale "inside" rows for an inactive zone (membership is per-active-zone).
+  if (status === 'INACTIVE') {
+    await db.delete(geofenceMemberships).where(eq(geofenceMemberships.geofenceId, id))
+  }
 
   return { id }
 }

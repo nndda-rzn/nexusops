@@ -33,8 +33,3 @@ export async function getGeofenceQuery(id: string, db: DbContext) {
   const [row] = await db.select().from(geofences).where(eq(geofences.id, id)).limit(1)
   return row ?? null
 }
-
-// Active geofences (containment candidates)
-export async function listActiveGeofencesQuery(db: DbContext) {
-  return db.select().from(geofences).where(eq(geofences.status, 'ACTIVE'))
-}

@@ -291,6 +291,23 @@ export const geofences = sharedMasterSchema.table(
   ],
 );
 
+// Geofence memberships — state tracking for entered/exited delta (F-04)
+// org-scoped (RLS by org_id), not shared read-all like geofences
+export const geofenceMemberships = sharedMasterSchema.table(
+  "geofence_memberships",
+  {
+    geofenceId: text("geofence_id").notNull().references(() => geofences.id),
+    vehicleId: text("vehicle_id").notNull(),
+    orgId: text("org_id").notNull(),
+    enteredAt: timestamp("entered_at", { withTimezone: true }).notNull().defaultNow(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("geofence_memberships_org_idx").on(t.orgId),
+    index("geofence_memberships_vehicle_idx").on(t.vehicleId),
+  ],
+);
+
 // Commodity Types
 export const commodityTypes = sharedMasterSchema.table(
   "commodity_types",

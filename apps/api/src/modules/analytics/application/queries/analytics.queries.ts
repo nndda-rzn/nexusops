@@ -4,7 +4,7 @@ import type { DbContext } from '@/shared/database/client'
 
 export type AnalyticsDomain = 'road' | 'maritime'
 
-function parseDateParam(value: string | undefined, field: string): Date | undefined {
+export function parseDateParam(value: string | undefined, field: string): Date | undefined {
   if (!value) return undefined
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) {

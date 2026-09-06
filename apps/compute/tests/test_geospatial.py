@@ -84,6 +84,25 @@ async def test_geofence_check_invalid_payload(mock_queries: AsyncMock) -> None:
 
 
 @patch("src.modules.geospatial.handler._run_queries", new_callable=AsyncMock)
+async def test_geofence_check_vehicle_ids_filter(mock_queries: AsyncMock) -> None:
+    mock_queries.return_value = [
+        [
+            {"vehicle_id": "v1", "position": "POINT(106.85 -6.20)"},
+            {"vehicle_id": "v3", "position": "POINT(110.0 -6.5)"},
+        ],
+        [{"id": "g1", "boundary": _POLYGON_WKT}],
+    ]
+    result = await geofence_check_handler({
+        "org_id": "o1",
+        "geofence_id": "g1",
+        "vehicle_ids": ["v1", "v3"],
+    })
+    # verify the IN-placeholder query was built (vehicle_ids non-empty -> filter applied)
+    assert result["checked_vehicle_ids"] == ["v1", "v3"]
+    assert result["inside_vehicle_ids"] == ["v1"]
+
+
+@patch("src.modules.geospatial.handler._run_queries", new_callable=AsyncMock)
 async def test_route_geojson_exports_features(mock_queries: AsyncMock) -> None:
     mock_queries.return_value = [[
         {

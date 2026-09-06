@@ -7,7 +7,8 @@ the optimization job.
 
 Rows are fetched via async psycopg (WKT strings), then materialized into
 GeoDataFrames for spatial analysis - matches the GeoPandas approach in
-docs/06-compute/geopandas.md without a sync DB connection.
+docs/06-compute/geopandas.md without a sync DB connection. Route GeoJSON
+export builds features with shapely mapping (no GeoDataFrame needed).
 """
 
 from typing import Any
@@ -61,13 +62,22 @@ async def geofence_check_handler(payload: dict[str, Any]) -> dict[str, Any]:
     except ValidationError as exc:
         raise ValueError(f"invalid-payload: {exc}") from exc
 
+    if inp.vehicle_ids:
+        placeholders = ",".join(["%s"] * len(inp.vehicle_ids))
+        vehicle_filter = f"AND vp.vehicle_id IN ({placeholders})"
+        vehicle_params: tuple = (inp.org_id, *inp.vehicle_ids)
+    else:
+        vehicle_filter = ""
+        vehicle_params = (inp.org_id,)
+
     rows = await _run_queries(
         [
-            """
+            f"""
             SELECT vp.vehicle_id, vp.position
             FROM road.vehicle_positions vp
             JOIN road.vehicles v ON v.id = vp.vehicle_id
             WHERE v.org_id = %s
+              {vehicle_filter}
               AND vp.recorded_at = (
                   SELECT MAX(recorded_at) FROM road.vehicle_positions vp2
                   WHERE vp2.vehicle_id = vp.vehicle_id
@@ -75,7 +85,7 @@ async def geofence_check_handler(payload: dict[str, Any]) -> dict[str, Any]:
             """,
             "SELECT id, boundary FROM shared_master.geofences WHERE id = %s AND status = 'ACTIVE'",
         ],
-        [(inp.org_id,), (inp.geofence_id,)],
+        [vehicle_params, (inp.geofence_id,)],
         inp.org_id,
     )
 

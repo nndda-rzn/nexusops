@@ -281,6 +281,8 @@ export const geofences = sharedMasterSchema.table(
     referenceId: text("reference_id"),
     boundary: geometryPolygon("boundary").notNull(),
     status: masterStatusEnum("status").notNull().default("ACTIVE"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     index("geofences_type_idx").on(t.geofenceType),

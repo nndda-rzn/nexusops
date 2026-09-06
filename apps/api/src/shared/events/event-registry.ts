@@ -24,7 +24,7 @@ import type { YardContainerPlacedEvent, YardContainerMovedEvent, YardContainerRe
 import type { WarehouseReceivedEvent, WarehousePutawayCompletedEvent, WarehousePickingStartedEvent, WarehousePickingCompletedEvent, WarehouseDispatchedEvent, WarehouseInventoryAdjustedEvent, WarehouseCycleCountCompletedEvent } from '@/modules/warehouse/domain/events/warehouse.events'
 import type { AviationFlightScheduledEvent, AviationSlotConfirmedEvent, AviationManifestClosedEvent, AviationLoadPlanApprovedEvent, AviationFlightDepartedEvent, AviationFlightArrivedEvent, AviationFlightDelayedEvent, AviationAogDeclaredEvent, AviationCargoAcceptedEvent } from '@/modules/aviation/domain/events/aviation.events'
 import type { OptimizationRequestedEvent, OptimizationJobStatusChangedEvent, PlanActivatedEvent, ScenarioSelectedEvent } from '@/modules/planning/domain/events/planning.events'
-import type { HandoverRequestedEvent, HandoverAcceptedEvent, HandoverRejectedEvent, HandoverCompletedEvent, HandoverCancelledEvent, ShipmentCreatedEvent, ShipmentStatusChangedEvent, ShipmentMilestoneReachedEvent, ShipmentExceptionRaisedEvent, ContainerAnnouncedEvent, ContainerMovedEvent, ContainerGateInEvent, ContainerGateOutEvent, ContainerDischargedEvent, ContainerHeldEvent, ContainerReleasedEvent, VehiclePositionUpdatedEvent } from '@/shared/events/event-types'
+import type { HandoverRequestedEvent, HandoverAcceptedEvent, HandoverRejectedEvent, HandoverCompletedEvent, HandoverCancelledEvent, ShipmentCreatedEvent, ShipmentStatusChangedEvent, ShipmentMilestoneReachedEvent, ShipmentExceptionRaisedEvent, ContainerAnnouncedEvent, ContainerMovedEvent, ContainerGateInEvent, ContainerGateOutEvent, ContainerDischargedEvent, ContainerHeldEvent, ContainerReleasedEvent, VehiclePositionUpdatedEvent, GeofenceEnteredEvent, GeofenceExitedEvent } from '@/shared/events/event-types'
 
 export type EventMap = {
   'operation.created': OperationCreatedEvent; 'operation.started': OperationStartedEvent; 'operation.completed': OperationCompletedEvent
@@ -75,4 +75,5 @@ export type EventMap = {
   'planning.optimization_job_status_changed': OptimizationJobStatusChangedEvent
   'planning.plan_activated': PlanActivatedEvent
   'planning.scenario_selected': ScenarioSelectedEvent
+  'geofence.entered': GeofenceEnteredEvent; 'geofence.exited': GeofenceExitedEvent
 }

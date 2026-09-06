@@ -25,6 +25,8 @@ import { intermodalRoutes } from '@/modules/intermodal/presentation/routes/inter
 import { portsRoutes } from '@/modules/shared-master/presentation/routes/ports.routes'
 import { stationsRoutes } from '@/modules/shared-master/presentation/routes/stations.routes'
 import { airportsRoutes } from '@/modules/shared-master/presentation/routes/airports.routes'
+import { geofencesRoutes } from '@/modules/shared-master/presentation/routes/geofences.routes'
+import { geofenceEvaluateRoutes } from '@/modules/shared-master/presentation/routes/geofence-evaluate.routes'
 import { vesselsRoutes } from '@/modules/maritime/presentation/routes/vessels.routes'
 import { voyagesRoutes } from '@/modules/maritime/presentation/routes/voyages.routes'
 import { portCallsRoutes } from '@/modules/maritime/presentation/routes/port-calls.routes'
@@ -34,6 +36,7 @@ import { trainsRoutes } from '@/modules/rail/presentation/routes/trains.routes'
 import { trainLifecycleRoutes } from '@/modules/rail/presentation/routes/train-lifecycle.routes'
 import { vehiclesRoutes } from '@/modules/road/presentation/routes/vehicles.routes'
 import { tripsRoutes } from '@/modules/road/presentation/routes/trips.routes'
+import { vehicleSpatialRoutes } from '@/modules/road/presentation/routes/vehicle-spatial.routes'
 import { employeesRoutes } from '@/modules/workforce/presentation/routes/employees.routes'
 import { employeeProfileRoutes } from '@/modules/workforce/presentation/routes/employee-profile.routes'
 import { workforceResourcesRoutes } from '@/modules/workforce/presentation/routes/workforce-resources.routes'
@@ -111,10 +114,11 @@ export function createApp() {
     .use(berthRoutes).use(craneRoutes).use(terminalManagementRoutes)
     .use(shipmentRoutes).use(shipmentSubRoutes).use(intermodalRoutes)
     .use(portsRoutes).use(stationsRoutes).use(airportsRoutes)
+    .use(geofencesRoutes).use(geofenceEvaluateRoutes)
     .use(vesselsRoutes).use(voyagesRoutes)
     .use(portCallsRoutes).use(portCallLifecycleRoutes)
     .use(railResourcesRoutes).use(trainsRoutes).use(trainLifecycleRoutes)
-    .use(vehiclesRoutes).use(tripsRoutes)
+    .use(vehiclesRoutes).use(tripsRoutes).use(vehicleSpatialRoutes)
     .use(employeesRoutes).use(employeeProfileRoutes).use(workforceResourcesRoutes).use(workforceAssignmentsRoutes)
     .use(assetsRoutes).use(assetOperationsRoutes)
     .use(workOrdersRoutes).use(maintenanceResourcesRoutes)

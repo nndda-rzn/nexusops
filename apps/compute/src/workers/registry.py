@@ -12,6 +12,10 @@ STREAM_SUFFIX_TO_TYPE and looks the handler up by canonical type.
 from collections.abc import Awaitable, Callable
 from typing import Any
 
+from src.modules.geospatial.handler import (
+    geofence_check_handler,
+    route_geojson_handler,
+)
 from src.modules.network_analysis.handler import (
     critical_path_handler,
     delay_propagation_handler,
@@ -26,6 +30,8 @@ HANDLERS: dict[str, Handler] = {
     "NETWORK_ANALYSIS": network_analysis_handler,
     "CRITICAL_PATH": critical_path_handler,
     "DELAY_PROPAGATION": delay_propagation_handler,
+    "GEOFENCE_CHECK": geofence_check_handler,
+    "ROUTE_GEOJSON": route_geojson_handler,
 }
 
 # Stream suffix (jobs:<suffix>) → canonical job type
@@ -34,6 +40,8 @@ STREAM_SUFFIX_TO_TYPE: dict[str, str] = {
     "network_analysis": "NETWORK_ANALYSIS",
     "critical_path": "CRITICAL_PATH",
     "delay_propagation": "DELAY_PROPAGATION",
+    "geofence_check": "GEOFENCE_CHECK",
+    "route_geojson": "ROUTE_GEOJSON",
 }
 
 # Errors that must never auto-retry

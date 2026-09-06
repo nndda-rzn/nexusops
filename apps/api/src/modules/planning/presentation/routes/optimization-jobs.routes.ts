@@ -11,6 +11,7 @@ const JOB_TYPES = t.Union([
   t.Literal('CRANE_SCHEDULING'), t.Literal('WORKFORCE_SCHEDULING'),
   t.Literal('ROUTE_OPTIMIZATION'), t.Literal('TRAIN_SCHEDULING'),
   t.Literal('NETWORK_ANALYSIS'), t.Literal('CRITICAL_PATH'), t.Literal('DELAY_PROPAGATION'),
+  t.Literal('GEOFENCE_CHECK'), t.Literal('ROUTE_GEOJSON'),
 ])
 
 export const planningRoutes = new Elysia({ prefix: '/planning' })

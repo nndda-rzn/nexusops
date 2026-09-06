@@ -1,6 +1,7 @@
 import { geofences } from '@/shared/database/schema/shared-master'
 import { eq } from 'drizzle-orm'
 import { generateId } from '@/shared/ids'
+import { assertValidWkt } from '@/shared/database/types/geometry'
 import { GeofenceNotFoundError, GeofenceConflictError } from '@/modules/shared-master/domain/errors/geofence.errors'
 import type { DbContext } from '@/shared/database/client'
 
@@ -25,6 +26,7 @@ export async function createGeofenceCommand(
   cmd: CreateGeofenceCommand,
   db: DbContext
 ): Promise<{ id: string; name: string }> {
+  assertValidWkt('POLYGON', cmd.boundary)
   const id = generateId()
   const now = new Date()
   await db.insert(geofences).values({
@@ -44,6 +46,7 @@ export async function updateGeofenceCommand(
   cmd: UpdateGeofenceCommand,
   db: DbContext
 ): Promise<{ id: string }> {
+  if (cmd.boundary !== undefined) assertValidWkt('POLYGON', cmd.boundary)
   const [existing] = await db.select().from(geofences).where(eq(geofences.id, cmd.id)).limit(1)
   if (!existing) throw new GeofenceNotFoundError(cmd.id)
 

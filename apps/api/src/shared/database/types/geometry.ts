@@ -1,4 +1,5 @@
 import { customType } from "drizzle-orm/pg-core";
+import { ValidationError } from "@/shared/errors";
 
 // ─────────────────────────────────────────
 // PostGIS geometry custom types for Drizzle ORM
@@ -61,4 +62,25 @@ export function fromWktPoint(
     longitude: parseFloat(match[1]),
     latitude: parseFloat(match[2]),
   };
+}
+
+// ─────────────────────────────────────────
+// Helper — validate WKT geometry string (F-05)
+// Throws ValidationError (422) instead of letting PostGIS raise 500.
+// ─────────────────────────────────────────
+const WKT_PATTERNS: Record<GeometryKind, RegExp> = {
+  POINT: /^POINT\s*\(\s*[+-]?\d+\.?\d*\s+[+-]?\d+\.?\d*\s*\)$/i,
+  LINESTRING: /^LINESTRING\s*\(\s*([+-]?\d+\.?\d*\s+[+-]?\d+\.?\d*\s*,\s*)+[+-]?\d+\.?\d*\s+[+-]?\d+\.?\d*\s*\)$/i,
+  POLYGON: /^POLYGON\s*\(\s*\([^)]*\)\s*\)$/i,
+};
+
+export type GeometryKind = 'POINT' | 'LINESTRING' | 'POLYGON';
+
+export function assertValidWkt(kind: GeometryKind, value: string): void {
+  if (!WKT_PATTERNS[kind].test(value)) {
+    throw new ValidationError(
+      `Invalid ${kind} WKT: must be a valid ${kind} geometry (SRID 4326).`,
+      { geometry: value },
+    );
+  }
 }

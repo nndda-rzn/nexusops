@@ -1,5 +1,6 @@
 import { routes } from '@/shared/database/schema/road'
 import { generateId } from '@/shared/ids'
+import { assertValidWkt } from '@/shared/database/types/geometry'
 import type { DbContext } from '@/shared/database/client'
 
 export type RouteType = 'HIGHWAY' | 'PROVINCIAL' | 'LOCAL' | 'TOLL'
@@ -19,6 +20,9 @@ export async function createRouteCommand(
   cmd: CreateRouteCommand,
   db: DbContext
 ): Promise<{ id: string }> {
+  if (cmd.origin !== undefined) assertValidWkt('POINT', cmd.origin)
+  if (cmd.destination !== undefined) assertValidWkt('POINT', cmd.destination)
+  if (cmd.geometry !== undefined) assertValidWkt('LINESTRING', cmd.geometry)
   const id = generateId()
   const now = new Date()
   await db.insert(routes).values({

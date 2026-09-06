@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm'
 import { ValidationError } from '@/shared/errors'
 import type { DbContext } from '@/shared/database/client'
 
-export type AnalyticsDomain = 'road' | 'maritime'
+export type AnalyticsDomain = 'road' | 'maritime' | 'operations'
 
 export function parseDateParam(value: string | undefined, field: string): Date | undefined {
   if (!value) return undefined
@@ -21,11 +21,15 @@ export async function listKpisQuery(
 ) {
   const table = domain === 'road'
     ? sql.raw('"analytics"."road_trip_kpis_daily"')
-    : sql.raw('"analytics"."maritime_port_call_kpis_daily"')
+    : domain === 'maritime'
+      ? sql.raw('"analytics"."maritime_port_call_kpis_daily"')
+      : sql.raw('"analytics"."operations_delay_kpis_daily"')
 
   const columns = domain === 'road'
     ? sql.raw('org_id, day, total_trips, completed_trips, on_time_trips, delayed_trips, avg_delay_minutes')
-    : sql.raw('org_id, day, total_calls, avg_turnaround_hours, avg_waiting_hours, departed_calls')
+    : domain === 'maritime'
+      ? sql.raw('org_id, day, total_calls, avg_turnaround_hours, avg_waiting_hours, departed_calls')
+      : sql.raw('org_id, day, total_operations, completed_operations, delayed_operations, avg_delay_minutes, max_delay_minutes')
 
   const from = parseDateParam(params?.from, 'from')
   const to = parseDateParam(params?.to, 'to')

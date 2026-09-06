@@ -43,3 +43,19 @@ FROM "maritime"."port_calls"
 GROUP BY org_id, date_trunc('day', COALESCE(ata, eta));
 CREATE UNIQUE INDEX "maritime_port_call_kpis_daily_uk" ON "analytics"."maritime_port_call_kpis_daily" ("org_id", "day");
 GRANT SELECT ON "analytics"."maritime_port_call_kpis_daily" TO "nexusops";
+
+-- MV 3: Operations delay KPIs daily
+DROP MATERIALIZED VIEW IF EXISTS "analytics"."operations_delay_kpis_daily";
+CREATE MATERIALIZED VIEW "analytics"."operations_delay_kpis_daily" AS
+SELECT
+  org_id,
+  date_trunc('day', COALESCE(actual_start, scheduled_start, created_at)) AS day,
+  COUNT(*) AS total_operations,
+  COUNT(*) FILTER (WHERE status = 'COMPLETED') AS completed_operations,
+  COUNT(*) FILTER (WHERE status = 'DELAYED' OR delay_minutes > 0) AS delayed_operations,
+  COALESCE(AVG(delay_minutes) FILTER (WHERE delay_minutes > 0), 0)::numeric(10,1) AS avg_delay_minutes,
+  COALESCE(MAX(delay_minutes), 0) AS max_delay_minutes
+FROM "operations"."operations"
+GROUP BY org_id, date_trunc('day', COALESCE(actual_start, scheduled_start, created_at));
+CREATE UNIQUE INDEX "operations_delay_kpis_daily_uk" ON "analytics"."operations_delay_kpis_daily" ("org_id", "day");
+GRANT SELECT ON "analytics"."operations_delay_kpis_daily" TO "nexusops";

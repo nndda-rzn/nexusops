@@ -5,7 +5,9 @@ import { db } from '@/shared/database/client'
 import { listKpisQuery } from '@/modules/analytics/application/queries/analytics.queries'
 import { refreshAnalyticsCommand } from '@/modules/analytics/application/commands/refresh-analytics.command'
 
-const KPI_DOMAINS = t.Union([t.Literal('road'), t.Literal('maritime')])
+const KPI_DOMAINS = t.Union([
+  t.Literal('road'), t.Literal('maritime'), t.Literal('operations'),
+])
 
 export const analyticsRoutes = new Elysia({ prefix: '/analytics' })
   .use(authMiddleware)

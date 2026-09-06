@@ -3,6 +3,7 @@ import { organizations, users, roles, orgMembers, orgModuleAccess } from '@/shar
 import { geofences, ports } from '@/shared/database/schema/shared-master'
 import { vehicles, routes, vehiclePositions, trips, drivers } from '@/shared/database/schema/road'
 import { vessels, voyages, portCalls } from '@/shared/database/schema/maritime'
+import { operations } from '@/shared/database/schema/operations'
 import { eq, and, sql } from 'drizzle-orm'
 import { logger } from '@/shared/logging'
 import { hashPassword } from '@/shared/auth/password'
@@ -498,6 +499,46 @@ async function seed() {
   })
 
   logger.info('Maritime operational seed done')
+
+  // ─────────────────────────────────────────
+  // Phase 6 operational seed — operations delay analysis
+  // ─────────────────────────────────────────
+  const operationsSeed = [
+    ['OP001', 'TRUCK_GATE_IN', 'COMPLETED', 0, 1],
+    ['OP002', 'TRUCK_GATE_OUT', 'COMPLETED', 15, 2],
+    ['OP003', 'CONTAINER_LOADING', 'DELAYED', 45, 3],
+    ['OP004', 'VESSEL_ARRIVAL', 'COMPLETED', 0, 5],
+    ['OP005', 'WAREHOUSE_RECEIVING', 'DELAYED', 30, 7],
+    ['OP006', 'TRAIN_DEPARTURE', 'COMPLETED', 10, 9],
+    ['OP007', 'TRUCK_GATE_IN', 'COMPLETED', 0, 12],
+    ['OP008', 'CONTAINER_DISCHARGE', 'DELAYED', 60, 15],
+    ['OP009', 'WAREHOUSE_DISPATCH', 'COMPLETED', 5, 20],
+    ['OP010', 'TRUCK_GATE_OUT', 'CANCELLED', 0, 25],
+  ]
+
+  await db.insert(operations).values(
+    operationsSeed.map(([id, type, status, delayMinutes, daysAgo]) => {
+      const scheduledStart = new Date(now - (daysAgo as number) * day)
+      const actualStart = status === 'CANCELLED' ? null : scheduledStart
+      const actualEnd = status === 'COMPLETED'
+        ? new Date(scheduledStart.getTime() + 3600000)
+        : null
+      return {
+        id: id as string,
+        orgId: ROAD_ID,
+        type: type as 'TRUCK_GATE_IN' | 'TRUCK_GATE_OUT' | 'CONTAINER_LOADING' | 'VESSEL_ARRIVAL' | 'WAREHOUSE_RECEIVING' | 'TRAIN_DEPARTURE' | 'CONTAINER_DISCHARGE' | 'WAREHOUSE_DISPATCH',
+        status: status as 'COMPLETED' | 'DELAYED' | 'CANCELLED',
+        priority: 'NORMAL' as const,
+        scheduledStart,
+        actualStart,
+        actualEnd,
+        delayMinutes: delayMinutes as number,
+        createdBy: ADMIN_USER_ID,
+      }
+    })
+  ).onConflictDoNothing()
+
+  logger.info('Operations delay seed done')
   logger.info('Seed completed successfully')
   logger.info('─────────────────────────────────')
   logger.info('Seed credentials:')

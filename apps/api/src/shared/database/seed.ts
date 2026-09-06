@@ -1,26 +1,64 @@
 import { db } from '@/shared/database/client'
-import { organizations, users, roles, permissions, rolePermissions, orgMembers, orgModuleAccess } from '@/shared/database/schema/identity'
+import { organizations, users, roles, orgMembers, orgModuleAccess } from '@/shared/database/schema/identity'
 import { geofences } from '@/shared/database/schema/shared-master'
 import { vehicles, routes, vehiclePositions } from '@/shared/database/schema/road'
-import { generateId } from '@/shared/ids'
+import { eq, and } from 'drizzle-orm'
 import { logger } from '@/shared/logging'
 import { hashPassword } from '@/shared/auth/password'
 
 // ─────────────────────────────────────────
 // Seed data
+// Idempotent re-runs. Two strategies combined:
+//  1. Resolve existing rows by natural key (slug/email/name) → reuse their ID
+//     so FK references stay valid across runs on an already-seeded DB.
+//  2. Deterministic fallback ULIDs for fresh DBs.
+// Random IDs per run break onConflictDoNothing (parent skipped by unique key,
+// child FK references a never-inserted ID → FK violation) and duplicate
+// non-unique tables.
 // ─────────────────────────────────────────
 
-const HOLDING_ID = generateId()
-const MARITIME_ID = generateId()
-const RAIL_ID = generateId()
-const ROAD_ID = generateId()
-const WAREHOUSE_ID = generateId()
+let HOLDING_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV'
+let MARITIME_ID = '01ARZ3NDEKTSV4RRFFQ69G5FBW'
+let RAIL_ID = '01ARZ3NDEKTSV4RRFFQ69G5FCX'
+let ROAD_ID = '01ARZ3NDEKTSV4RRFFQ69G5FDY'
+let WAREHOUSE_ID = '01ARZ3NDEKTSV4RRFFQ69G5FEZ'
 
-const ADMIN_USER_ID = generateId()
-const MARITIME_ADMIN_ID = generateId()
+let ADMIN_USER_ID = '01ARZ3NDEKTSV4RRFFQ69G5FFA'
+let MARITIME_ADMIN_ID = '01ARZ3NDEKTSV4RRFFQ69G5FGB'
+
+// Resolve existing ID by column match, fallback to deterministic ID.
+// Keeps FK refs stable whether the DB was seeded before or is fresh.
+async function resolveOrgId(fallbackId: string, slug: string): Promise<string> {
+  const [row] = await db.select({ id: organizations.id }).from(organizations)
+    .where(eq(organizations.slug, slug)).limit(1)
+  return row?.id ?? fallbackId
+}
+
+async function resolveUserId(fallbackId: string, email: string): Promise<string> {
+  const [row] = await db.select({ id: users.id }).from(users)
+    .where(eq(users.email, email)).limit(1)
+  return row?.id ?? fallbackId
+}
+
+async function resolveRoleId(fallbackId: string, orgId: string, name: string): Promise<string> {
+  const [row] = await db.select({ id: roles.id }).from(roles)
+    .where(and(eq(roles.orgId, orgId), eq(roles.name, name))).limit(1)
+  return row?.id ?? fallbackId
+}
 
 async function seed() {
   logger.info('Starting database seed...')
+
+  // Resolve existing IDs on pre-seeded DBs (idempotent re-runs):
+  // reuse existing row IDs so child FK refs stay valid; deterministic
+  // fallback for fresh DBs.
+  HOLDING_ID = await resolveOrgId(HOLDING_ID, 'nexusops-holding')
+  MARITIME_ID = await resolveOrgId(MARITIME_ID, 'entitas-pelayaran')
+  RAIL_ID = await resolveOrgId(RAIL_ID, 'entitas-kereta')
+  ROAD_ID = await resolveOrgId(ROAD_ID, 'entitas-trucking')
+  WAREHOUSE_ID = await resolveOrgId(WAREHOUSE_ID, 'entitas-warehouse')
+  ADMIN_USER_ID = await resolveUserId(ADMIN_USER_ID, 'admin@nexusops.io')
+  MARITIME_ADMIN_ID = await resolveUserId(MARITIME_ADMIN_ID, 'ops@pelayaran.nexusops.io')
 
   // ─────────────────────────────────────────
   // Organizations
@@ -102,8 +140,10 @@ async function seed() {
   // ─────────────────────────────────────────
   // Roles
   // ─────────────────────────────────────────
-  const HOLDING_ADMIN_ROLE_ID = generateId()
-  const MARITIME_OPS_ROLE_ID = generateId()
+  let HOLDING_ADMIN_ROLE_ID = '01ARZ3NDEKTSV4RRFFQ69G5GHC'
+  let MARITIME_OPS_ROLE_ID = '01ARZ3NDEKTSV4RRFFQ69G5HID'
+  HOLDING_ADMIN_ROLE_ID = await resolveRoleId(HOLDING_ADMIN_ROLE_ID, HOLDING_ID, 'platform_admin')
+  MARITIME_OPS_ROLE_ID = await resolveRoleId(MARITIME_OPS_ROLE_ID, MARITIME_ID, 'operations_manager')
 
   await db.insert(roles).values([
     {
@@ -129,13 +169,13 @@ async function seed() {
   // ─────────────────────────────────────────
   await db.insert(orgMembers).values([
     {
-      id: generateId(),
+      id: '01ARZ3NDEKTSV4RRFFQ69G5IJE',
       orgId: HOLDING_ID,
       userId: ADMIN_USER_ID,
       roleId: HOLDING_ADMIN_ROLE_ID,
     },
     {
-      id: generateId(),
+      id: '01ARZ3NDEKTSV4RRFFQ69G5JKF',
       orgId: MARITIME_ID,
       userId: MARITIME_ADMIN_ID,
       roleId: MARITIME_OPS_ROLE_ID,
@@ -179,8 +219,8 @@ async function seed() {
   // Geospatial seed (Phase 5)
   // Tanjung Priok terminal zone + Cikarang warehouse zone
   // ─────────────────────────────────────────
-  const priokGeofenceId = generateId()
-  const cikarangGeofenceId = generateId()
+  const priokGeofenceId = '01ARZ3NDEKTSV4RRFFQ69G5KLG'
+  const cikarangGeofenceId = '01ARZ3NDEKTSV4RRFFQ69G5LMH'
 
   await db.insert(geofences).values([
     {
@@ -204,8 +244,8 @@ async function seed() {
   // ─────────────────────────────────────────
   // Road domain seed — vehicles, route, positions
   // ─────────────────────────────────────────
-  const truckAId = generateId()
-  const truckBId = generateId()
+  const truckAId = '01ARZ3NDEKTSV4RRFFQ69G5MNI'
+  const truckBId = '01ARZ3NDEKTSV4RRFFQ69G5NOJ'
 
   await db.insert(vehicles).values([
     {
@@ -226,7 +266,7 @@ async function seed() {
 
   logger.info('Road vehicles seeded')
 
-  const priokToCikarangRouteId = generateId()
+  const priokToCikarangRouteId = '01ARZ3NDEKTSV4RRFFQ69G5OPK'
   await db.insert(routes).values({
     id: priokToCikarangRouteId,
     orgId: ROAD_ID,
@@ -243,13 +283,13 @@ async function seed() {
   // truckA inside Priok zone, truckB outside (near Cikarang)
   await db.insert(vehiclePositions).values([
     {
-      id: generateId(),
+      id: '01ARZ3NDEKTSV4RRFFQ69G5PQL',
       vehicleId: truckAId,
       position: 'POINT(106.89 -6.11)',
       recordedAt: new Date(),
     },
     {
-      id: generateId(),
+      id: '01ARZ3NDEKTSV4RRFFQ69G5QRM',
       vehicleId: truckBId,
       position: 'POINT(107.15 -6.29)',
       recordedAt: new Date(),
